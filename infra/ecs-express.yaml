@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ScanPilot stateless OpenCV 5 and OCR on ECS Express Mode
+Parameters:
+  ImageUri:
+    Type: String
+    Description: Existing private ECR linux/amd64 image URI with immutable tag
+Resources:
+  DemoPassword:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: ScanPilot hosted demo password; username scanpilot
+      GenerateSecretString:
+        PasswordLength: 24
+        ExcludePunctuation: true
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ecs-tasks.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+      Policies:
+        - PolicyName: ReadDemoPassword
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref DemoPassword
+  InfrastructureRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ecs.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSInfrastructureRoleforExpressGatewayServices'
+  Cluster:
+    Type: AWS::ECS::Cluster
+  Service:
+    Type: AWS::ECS::ExpressGatewayService
+    Properties:
+      Cluster: !Ref Cluster
+      ExecutionRoleArn: !GetAtt ExecutionRole.Arn
+      InfrastructureRoleArn: !GetAtt InfrastructureRole.Arn
+      Cpu: '2048'
+      Memory: '4096'
+      HealthCheckPath: /api/health
+      ScalingTarget:
+        MinTaskCount: 1
+        MaxTaskCount: 2
+        AutoScalingMetric: AVERAGE_CPU
+        AutoScalingTargetValue: 60
+      PrimaryContainer:
+        Image: !Ref ImageUri
+        ContainerPort: 8080
+        Environment:
+          - Name: SCANPILOT_RUNTIME
+            Value: aws-ecs
+        Secrets:
+          - Name: SCANPILOT_PASSWORD
+            ValueFrom: !Ref DemoPassword
+Outputs:
+  Endpoint:
+    Value: !GetAtt Service.Endpoint
+  ServiceArn:
+    Value: !GetAtt Service.ServiceArn
+  PasswordSecretArn:
+    Description: Retrieve privately in Secrets Manager; username scanpilot
+    Value: !Ref DemoPassword

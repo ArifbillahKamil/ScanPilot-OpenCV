@@ -1,0 +1,69 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Length 1787 >>
+stream
+0.12 g 0.12 G
+BT /F2 10 Tf 1 0 0 1 48 787 Tm (SCANPILOT / BAHAN UJI) Tj ET
+BT /F2 28 Tf 1 0 0 1 48 742 Tm (INVOICE CONTOH) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 717 Tm (Dokumen sintetis - bukan tagihan atau bukti transaksi.) Tj ET
+0.5 w 48 694 m 547 694 l S
+BT /F2 12 Tf 1 0 0 1 48 666 Tm (Pemasok: Studio Contoh) Tj ET
+BT /F1 12 Tf 1 0 0 1 48 643 Tm (Pelanggan: Tim Administrasi Contoh) Tj ET
+BT /F1 12 Tf 1 0 0 1 48 608 Tm (Nomor invoice: SP-DEMO-001) Tj ET
+BT /F1 12 Tf 1 0 0 1 48 585 Tm (Tanggal contoh: 08 September 2026) Tj ET
+0.5 w 48 554 m 547 554 l S
+BT /F2 11 Tf 1 0 0 1 48 533 Tm (Barang) Tj ET
+BT /F2 11 Tf 1 0 0 1 280 533 Tm (Qty) Tj ET
+BT /F2 11 Tf 1 0 0 1 335 533 Tm (Harga) Tj ET
+BT /F2 11 Tf 1 0 0 1 450 533 Tm (Jumlah) Tj ET
+0.5 w 48 518 m 547 518 l S
+BT /F1 11 Tf 1 0 0 1 48 489 Tm (Buku catatan) Tj ET
+BT /F1 11 Tf 1 0 0 1 280 489 Tm (8) Tj ET
+BT /F1 11 Tf 1 0 0 1 335 489 Tm (Rp 18.500) Tj ET
+BT /F1 11 Tf 1 0 0 1 450 489 Tm (Rp 148.000) Tj ET
+BT /F1 11 Tf 1 0 0 1 48 450 Tm (Map dokumen) Tj ET
+BT /F1 11 Tf 1 0 0 1 280 450 Tm (12) Tj ET
+BT /F1 11 Tf 1 0 0 1 335 450 Tm (Rp 6.500) Tj ET
+BT /F1 11 Tf 1 0 0 1 450 450 Tm (Rp 78.000) Tj ET
+BT /F1 11 Tf 1 0 0 1 48 411 Tm (Pulpen hitam) Tj ET
+BT /F1 11 Tf 1 0 0 1 280 411 Tm (10) Tj ET
+BT /F1 11 Tf 1 0 0 1 335 411 Tm (Rp 4.500) Tj ET
+BT /F1 11 Tf 1 0 0 1 450 411 Tm (Rp 45.000) Tj ET
+0.5 w 48 377 m 547 377 l S
+BT /F2 14 Tf 1 0 0 1 48 348 Tm (TOTAL) Tj ET
+BT /F2 16 Tf 1 0 0 1 414 348 Tm (Rp 271.000) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 296 Tm (Seluruh nama dan transaksi pada halaman ini adalah rekaan.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 279 Tm (Tidak ada instruksi pembayaran. Dipakai hanya untuk pengujian OCR.) Tj ET
+0.5 w 48 99 m 547 99 l S
+BT /F1 9 Tf 1 0 0 1 48 77 Tm (SP-DEMO-001 | Cetak A4, skala 100%, hitam putih cukup.) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000257 00000 n 
+0000000327 00000 n 
+0000000402 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+2241
+%%EOF

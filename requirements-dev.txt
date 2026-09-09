@@ -1,0 +1,5 @@
+-r requirements.txt
+-c requirements-lock.txt
+httpx==0.27.2
+boto3==1.43.89
+websocket-client==1.8.0

@@ -1,0 +1,170 @@
+[
+  {
+    "invoice_id": "SP-DEMO-001",
+    "total_idr": 271000,
+    "total_display": "Rp 271.000",
+    "currency": "IDR",
+    "items": [
+      {
+        "description": "Buku catatan",
+        "quantity": 8,
+        "unit_price_idr": 18500,
+        "amount_idr": 148000
+      },
+      {
+        "description": "Map dokumen",
+        "quantity": 12,
+        "unit_price_idr": 6500,
+        "amount_idr": 78000
+      },
+      {
+        "description": "Pulpen hitam",
+        "quantity": 10,
+        "unit_price_idr": 4500,
+        "amount_idr": 45000
+      }
+    ],
+    "text_in_drawing_order": [
+      "SCANPILOT / BAHAN UJI",
+      "INVOICE CONTOH",
+      "Dokumen sintetis - bukan tagihan atau bukti transaksi.",
+      "Pemasok: Studio Contoh",
+      "Pelanggan: Tim Administrasi Contoh",
+      "Nomor invoice: SP-DEMO-001",
+      "Tanggal contoh: 08 September 2026",
+      "Barang",
+      "Qty",
+      "Harga",
+      "Jumlah",
+      "Buku catatan",
+      "8",
+      "Rp 18.500",
+      "Rp 148.000",
+      "Map dokumen",
+      "12",
+      "Rp 6.500",
+      "Rp 78.000",
+      "Pulpen hitam",
+      "10",
+      "Rp 4.500",
+      "Rp 45.000",
+      "TOTAL",
+      "Rp 271.000",
+      "Seluruh nama dan transaksi pada halaman ini adalah rekaan.",
+      "Tidak ada instruksi pembayaran. Dipakai hanya untuk pengujian OCR.",
+      "SP-DEMO-001 | Cetak A4, skala 100%, hitam putih cukup."
+    ]
+  },
+  {
+    "invoice_id": "SP-DEMO-002",
+    "total_idr": 322500,
+    "total_display": "Rp 322.500",
+    "currency": "IDR",
+    "items": [
+      {
+        "description": "Kertas A4",
+        "quantity": 3,
+        "unit_price_idr": 68500,
+        "amount_idr": 205500
+      },
+      {
+        "description": "Amplop dokumen",
+        "quantity": 15,
+        "unit_price_idr": 2800,
+        "amount_idr": 42000
+      },
+      {
+        "description": "Label arsip",
+        "quantity": 6,
+        "unit_price_idr": 12500,
+        "amount_idr": 75000
+      }
+    ],
+    "text_in_drawing_order": [
+      "SCANPILOT / BAHAN UJI",
+      "INVOICE CONTOH",
+      "Dokumen sintetis - bukan tagihan atau bukti transaksi.",
+      "Pemasok: Studio Contoh",
+      "Pelanggan: Tim Administrasi Contoh",
+      "Nomor invoice: SP-DEMO-002",
+      "Tanggal contoh: 08 September 2026",
+      "Barang",
+      "Qty",
+      "Harga",
+      "Jumlah",
+      "Kertas A4",
+      "3",
+      "Rp 68.500",
+      "Rp 205.500",
+      "Amplop dokumen",
+      "15",
+      "Rp 2.800",
+      "Rp 42.000",
+      "Label arsip",
+      "6",
+      "Rp 12.500",
+      "Rp 75.000",
+      "TOTAL",
+      "Rp 322.500",
+      "Seluruh nama dan transaksi pada halaman ini adalah rekaan.",
+      "Tidak ada instruksi pembayaran. Dipakai hanya untuk pengujian OCR.",
+      "SP-DEMO-002 | Cetak A4, skala 100%, hitam putih cukup."
+    ]
+  },
+  {
+    "invoice_id": "SP-DEMO-003",
+    "total_idr": 412000,
+    "total_display": "Rp 412.000",
+    "currency": "IDR",
+    "items": [
+      {
+        "description": "Binder arsip",
+        "quantity": 7,
+        "unit_price_idr": 38500,
+        "amount_idr": 269500
+      },
+      {
+        "description": "Pembatas halaman",
+        "quantity": 9,
+        "unit_price_idr": 8500,
+        "amount_idr": 76500
+      },
+      {
+        "description": "Klip dokumen",
+        "quantity": 4,
+        "unit_price_idr": 16500,
+        "amount_idr": 66000
+      }
+    ],
+    "text_in_drawing_order": [
+      "SCANPILOT / BAHAN UJI",
+      "INVOICE CONTOH",
+      "Dokumen sintetis - bukan tagihan atau bukti transaksi.",
+      "Pemasok: Studio Contoh",
+      "Pelanggan: Tim Administrasi Contoh",
+      "Nomor invoice: SP-DEMO-003",
+      "Tanggal contoh: 08 September 2026",
+      "Barang",
+      "Qty",
+      "Harga",
+      "Jumlah",
+      "Binder arsip",
+      "7",
+      "Rp 38.500",
+      "Rp 269.500",
+      "Pembatas halaman",
+      "9",
+      "Rp 8.500",
+      "Rp 76.500",
+      "Klip dokumen",
+      "4",
+      "Rp 16.500",
+      "Rp 66.000",
+      "TOTAL",
+      "Rp 412.000",
+      "Seluruh nama dan transaksi pada halaman ini adalah rekaan.",
+      "Tidak ada instruksi pembayaran. Dipakai hanya untuk pengujian OCR.",
+      "SP-DEMO-003 | Cetak A4, skala 100%, hitam putih cukup."
+    ]
+  }
+]

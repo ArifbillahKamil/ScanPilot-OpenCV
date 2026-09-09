@@ -1,0 +1,90 @@
+{
+  "dataset": "5 synthetic images pairs, one shared generated layout; no real photographs",
+  "limitations": "Totals vary independently from item rows to test visual reading, not invoice arithmetic. No population accuracy, CER on full documents, or calibrated confidence claim.",
+  "cases": [
+    {
+      "id": "BENCH-101",
+      "expected_amount": "184500",
+      "raw_ocr": "",
+      "fixed_pipeline": "",
+      "two_photo": "184500",
+      "exact_match": true,
+      "recovered_areas": 1,
+      "elapsed_ms": 6738,
+      "registration": {
+        "inliers": 306,
+        "matches": 335,
+        "inlier_ratio": 0.913,
+        "median_error_px": 0.1
+      }
+    },
+    {
+      "id": "BENCH-102",
+      "expected_amount": "326750",
+      "raw_ocr": "",
+      "fixed_pipeline": "",
+      "two_photo": "326750",
+      "exact_match": true,
+      "recovered_areas": 1,
+      "elapsed_ms": 4957,
+      "registration": {
+        "inliers": 308,
+        "matches": 337,
+        "inlier_ratio": 0.914,
+        "median_error_px": 0.097
+      }
+    },
+    {
+      "id": "BENCH-103",
+      "expected_amount": "592000",
+      "raw_ocr": "",
+      "fixed_pipeline": "",
+      "two_photo": "592000",
+      "exact_match": true,
+      "recovered_areas": 1,
+      "elapsed_ms": 5860,
+      "registration": {
+        "inliers": 306,
+        "matches": 334,
+        "inlier_ratio": 0.916,
+        "median_error_px": 0.099
+      }
+    },
+    {
+      "id": "BENCH-104",
+      "expected_amount": "718250",
+      "raw_ocr": "",
+      "fixed_pipeline": "",
+      "two_photo": "718250",
+      "exact_match": true,
+      "recovered_areas": 1,
+      "elapsed_ms": 5939,
+      "registration": {
+        "inliers": 311,
+        "matches": 342,
+        "inlier_ratio": 0.909,
+        "median_error_px": 0.098
+      }
+    },
+    {
+      "id": "BENCH-105",
+      "expected_amount": "963400",
+      "raw_ocr": "",
+      "fixed_pipeline": "",
+      "two_photo": "963400",
+      "exact_match": true,
+      "recovered_areas": 1,
+      "elapsed_ms": 5782,
+      "registration": {
+        "inliers": 308,
+        "matches": 334,
+        "inlier_ratio": 0.922,
+        "median_error_px": 0.098
+      }
+    }
+  ],
+  "raw_exact": 0,
+  "fixed_exact": 0,
+  "two_photo_exact": 5,
+  "median_recovery_ms": 5860
+}
