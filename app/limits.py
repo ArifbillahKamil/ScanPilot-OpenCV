@@ -28,9 +28,11 @@ class RequestPolicy:
                 return await JSONResponse({'detail':'Masuk dengan akses demo ScanPilot.'},401,
                     headers={'WWW-Authenticate':'Basic realm="ScanPilot", charset="UTF-8"'})(scope,receive,send)
         limit=25*1024*1024
+        if scope['path']=='/api/package/export': limit=80*1024*1024
+        size_error='Package export must not exceed 80 MB.' if limit>25*1024*1024 else 'Total unggahan maksimal 25 MB.'
         try:
             if int(headers.get(b'content-length',b'0'))>limit:
-                return await JSONResponse({'detail':'Total unggahan maksimal 25 MB.'},413)(scope,receive,send)
+                return await JSONResponse({'detail':size_error},413)(scope,receive,send)
         except ValueError:
             return await JSONResponse({'detail':'Ukuran request tidak valid.'},400)(scope,receive,send)
         # Buffer at most 25 MB before multipart parsing, including chunked bodies.
@@ -45,7 +47,7 @@ class RequestPolicy:
                 chunk=message.get('body',b'')
                 size+=len(chunk)
                 if size>limit:
-                    return await JSONResponse({'detail':'Total unggahan maksimal 25 MB.'},413)(scope,receive,send)
+                    return await JSONResponse({'detail':size_error},413)(scope,receive,send)
                 chunks.append(chunk)
                 if not message.get('more_body',False):
                     break

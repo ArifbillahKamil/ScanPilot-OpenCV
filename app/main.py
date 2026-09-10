@@ -33,14 +33,14 @@ def index():
 @app.get('/api/health')
 def health():
     return {'opencv': cv2.__version__, 'ocr': True, 'mode': os.getenv('SCANPILOT_RUNTIME','local'),
-            'planner':'bounded-policy', 'storage':'none', 'max_photos':2}
+            'planner':'bounded-policy', 'storage':'none', 'max_photos':2,'max_package_pages':20,'pdf':True}
 
 
 @app.get('/api/sample/{kind}')
-def example(kind: str):
+def example(kind: str, lang: str = 'id'):
     if kind not in {'perspective','shadow','blur','clear','covered','second','covered-second','different','conflict'}:
         raise HTTPException(404, 'Contoh tidak ditemukan.')
-    return Response(encode(sample(kind)), media_type='image/jpeg', headers={'Cache-Control':'no-store'})
+    return Response(encode(sample(kind,language='en' if lang=='en' else 'id')), media_type='image/jpeg', headers={'Cache-Control':'no-store'})
 
 
 def load_image(file: UploadFile):
@@ -80,19 +80,19 @@ def run_processing(action):
 
 
 @app.post('/api/analyze')
-def inspect(file: UploadFile):
+def inspect(file: UploadFile, page_frame: bool = Form(False)):
     image = load_image(file)
-    return run_processing(lambda: inspect_document(image))
+    return run_processing(lambda: inspect_document(image, page_frame=page_frame))
 
 
 @app.post('/api/recover')
-def recover_document(first: UploadFile, second: UploadFile, regions: str = Form('[]')):
+def recover_document(first: UploadFile, second: UploadFile, regions: str = Form('[]'), first_page_frame: bool=Form(False)):
     try:
         selected = json.loads(regions)
         if not isinstance(selected, list) or len(selected) > 10 or any(not isinstance(b,list) for b in selected):
             raise ValueError('Maksimal sepuluh area tambahan.')
         first_image, second_image = load_image(first), load_image(second)
-        return run_processing(lambda: recover(first_image,second_image,selected))
+        return run_processing(lambda: recover(first_image,second_image,selected,first_page_frame=first_page_frame))
     except (ValueError, TypeError) as error:
         raise HTTPException(400, 'Format area tidak valid.') from error
     finally:
@@ -117,3 +117,7 @@ async def response_policy(request, call_next):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'no-referrer'
     return response
+
+
+from app.package import install_routes
+install_routes(app,run_processing,load_image)

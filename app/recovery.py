@@ -32,12 +32,22 @@ def intersects(a, b):
     return max(0, min(x+w, X+W)-max(x, X)) * max(0, min(y+h, Y+H)-max(y, Y))
 
 
-def regions_for(page, lines, sharpness):
+def regions_for(page, lines, sharpness, detect_cover=True):
     h, w = page.shape[:2]
     boxes = []
-    contours, _ = cv2.findContours(obstruction(page), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    mask = obstruction(page)
+    if not detect_cover:
+        # Without page corners, inspect only objects entering the observed text area.
+        text_area=np.zeros_like(mask)
+        if lines:
+            x=min(l['box'][0] for l in lines); y=min(l['box'][1] for l in lines)
+            right=max(l['box'][0]+l['box'][2] for l in lines)
+            bottom=max(l['box'][1]+l['box'][3] for l in lines)
+            text_area[y:bottom,x:right]=255
+        mask=cv2.bitwise_and(mask,text_area)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     for contour in contours:
-        if cv2.contourArea(contour) > h*w*.002:
+        if cv2.contourArea(contour) > h*w*(.002 if detect_cover else .0005):
             x, y, bw, bh = cv2.boundingRect(contour)
             # Background along the outer edge is not a useful recovery target.
             if bw > w*.9 and bh > h*.9:
@@ -50,8 +60,8 @@ def regions_for(page, lines, sharpness):
         for line in lines:
             if line['uncertain'] and not any(intersects(line['box'], b) for b, _ in boxes):
                 x, y, bw, bh = line['box']
-                boxes.append(([max(0,x-8),max(0,y-8),min(w,x+bw+8)-max(0,x-8),
-                               min(h,y+bh+8)-max(0,y-8)], 'low-ocr-score'))
+                boxes.append(([max(0,x-2),max(0,y-2),min(w,x+bw+2)-max(0,x-2),
+                               min(h,y+bh+2)-max(0,y-2)], 'low-ocr-score'))
     labels = {'possible-cover': 'Kemungkinan tertutup / objek berwarna',
               'blur': 'Detail teks terlalu lemah', 'low-ocr-score': 'Bacaan OCR meragukan'}
     return [{'id': f'region-{i+1}', 'box': b, 'reason': why, 'label': labels[why],
@@ -68,23 +78,33 @@ def pack(result, page, lines, regions, started):
         result['status'] = 'retake'
         result['instruction'] = ('Ada bagian yang belum dapat diverifikasi. Singkirkan penghalang, ketuk teks untuk fokus, '
                                  'lalu tambahkan foto kedua dari halaman yang sama. Sertakan teks di sekitar area agar dapat dicocokkan.')
+        if not any(r['reason'] == 'possible-cover' for r in unresolved):
+            result['instruction'] = ('Detail teks belum cukup jelas. Ketuk teks untuk fokus dan gunakan cahaya merata. '
+                                     'Tambahkan foto kedua yang lebih tajam dengan teks di sekitar area tetap terlihat.')
     if not lines:
         result['status'] = 'retake'
         result['instruction'] = 'Belum ada teks yang terbaca. Ambil foto lebih tajam dengan keempat sudut halaman terlihat.'
     for line in lines:
-        line['unresolved'] = any(intersects(line['box'], r['box']) for r in unresolved)
+        line['unresolved'] = any(intersects(line['box'], r['box']) > .25*line['box'][2]*line['box'][3] for r in unresolved)
+    if result.get('page_estimated'):
+        result['instruction'] = ('Perspektif diluruskan dari tepi kertas. Area abu-abu berada di luar foto; periksa batas hasil. '
+                                 'Periksa bacaan OCR yang ditandai sebelum menggunakan dokumen.')
     return result
 
 
-def inspect(image):
+def inspect(image, page_frame=False):
     started = time.perf_counter()
-    result = analyze(image)
+    result = analyze(image, page_frame=page_frame)
     page = decode_url(result['aligned'])
     output = decode_url(result['result'])
     lines = read(output)
     result['before_lines'] = lines if result['aligned']==result['result'] else read(page)
     result['before_text'] = text_of(result['before_lines'])
-    regions = regions_for(page, lines, result['before']['sharpness'])
+    regions = regions_for(page, lines, result['before']['sharpness'], detect_cover=result['page_detected'])
+    if any(r['reason'] == 'possible-cover' for r in regions):
+        result['issues'].append({'kind':'possible-cover', 'label':'Kemungkinan tertutup / objek berwarna', 'action':'Perlu ditinjau'})
+    if any(r['reason'] == 'low-ocr-score' for r in regions):
+        result['issues'].append({'kind':'low-ocr-score', 'label':'Bacaan OCR meragukan', 'action':'Perlu ditinjau'})
     result['trace'].append({'title':'Membaca teks dengan OCR lokal',
                             'detail':f'{len(lines)} baris terdeteksi. Skor model tidak membuktikan ketepatan isi.'})
     result['trace'].append({'title':'Memilih langkah berikutnya',
@@ -169,9 +189,30 @@ def merge_regions(regions):
     return merged
 
 
-def recover(first_image, second_image, selected=None):
+def expand_to_readable_lines(regions, lines, shape):
+    """Include whole supported lines when an obstruction covers only a few letters."""
+    h,w=shape[:2]
+    expanded=[]
+    for original in regions:
+        region=dict(original)
+        if region['reason']=='possible-cover':
+            target=region['box']
+            related=[line['box'] for line in lines if line['score']>=.85 and
+                     max(0,min(line['box'][1]+line['box'][3],target[1]+target[3])-max(line['box'][1],target[1])) > .25*line['box'][3]]
+            if related:
+                region['detected_box']=list(target)
+                boxes=[target]+related
+                x=max(0,min(b[0] for b in boxes)-3); y=max(0,min(b[1] for b in boxes)-3)
+                right=min(w,max(b[0]+b[2] for b in boxes)+3)
+                bottom=min(h,max(b[1]+b[3] for b in boxes)+3)
+                region['box']=[x,y,right-x,bottom-y]
+        expanded.append(region)
+    return merge_regions(expanded)
+
+
+def recover(first_image, second_image, selected=None, first_page_frame=False):
     started = time.perf_counter()
-    result = inspect(first_image)
+    result = inspect(first_image,page_frame=first_page_frame)
     first = decode_url(result['aligned'])
     base = decode_url(result['result'])
     second = second_image
@@ -198,6 +239,7 @@ def recover(first_image, second_image, selected=None):
     if conflicts:
         raise ValueError('Isi kedua foto bertentangan: '+ '; '.join(f"{c['first']} / {c['second']}" for c in conflicts[:3])+
                          '. Hasil tidak digabung. Pastikan halaman dan versi dokumennya sama; periksa juga bacaan OCR.')
+    regions=expand_to_readable_lines(regions,candidate_lines,first.shape)
     output = base.copy()
     source_mask = np.zeros(first.shape[:2], np.uint8)
     for region in regions:
@@ -244,9 +286,9 @@ def recover(first_image, second_image, selected=None):
     if all(r['status']=='recovered' for r in regions) and count:
         result['status']='review'
         result['instruction']='Area yang ditandai berhasil diambil dari foto kedua. Klik area untuk melihat sumbernya, lalu periksa teks dan angka penting.'
-    if not result['page_detected']:
-        result['status']='retake'
-        result['instruction']='Batas halaman awal belum jelas. Ambil foto baru dengan empat sudut terlihat sebelum melanjutkan.'
+    if not count:
+        notes=list(dict.fromkeys(r.get('note','') for r in regions if r.get('note')))
+        result['instruction']='Foto kedua sudah diperiksa, tetapi belum ada area yang dapat digabung. '+ ' '.join(notes)
     result.update(sources=[{'id':'photo-1','label':'Foto awal'},{'id':'photo-2','label':'Foto tambahan'}],
                   second_original=data_url(second), second_aligned=data_url(warped),
                   registration=match, second_to_page=H.tolist(), recovered_count=count)

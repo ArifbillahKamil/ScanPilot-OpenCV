@@ -1,5 +1,11 @@
 # ScanPilot
 
+**Alur utama sekarang berupa paket dokumen:** unggah satu PDF maksimal 20 MB atau hingga 20 foto. Setiap halaman diperiksa otomatis dan diprioritaskan berdasarkan kebutuhan penanganan. Buka halaman bermasalah untuk pemulihan dua foto, lalu kembali ke daftar dan ekspor PDF gabungan beserta laporan. Halaman PDF yang tidak diubah mempertahankan teks dan grafis aslinya. Paket berada di tab browser; refresh akan menghapusnya. Lihat [panduan paket](docs/PACKAGES.md) dan [README English](README.en.md) untuk batas serta alur terbaru; bagian satu foto di bawah menjelaskan editor per halaman.
+
+[English](README.en.md) | [Bahasa Indonesia](README.md)
+
+Antarmuka menyediakan pilihan **English / Indonesia** di header, dengan English sebagai bahasa awal. Pilihan tersimpan di browser. Pergantian bahasa mempertahankan hasil dan area pilihan; teks OCR serta nama berkas asli tidak diterjemahkan. Anotasi ekspor mengikuti bahasa yang dipilih.
+
 Pulihkan bagian dokumen yang tertutup atau meragukan dengan bukti dari foto kedua. OpenCV 5 mencocokkan halaman; OCR lokal membaca teks; setiap area hasil memiliki sumber yang bisa diperiksa. Tidak ada angka yang diisi melalui prediksi generatif.
 
 ## Jalankan
@@ -20,7 +26,7 @@ Buka http://127.0.0.1:8765. Pilih **Tertutup**, klik **Lanjutkan pemulihan**, ke
 2. **Pulihkan dari bukti kedua:** arahan pemotretan, penanda manual, pencocokan SIFT/RANSAC, pemeriksaan pertentangan bacaan, salinan area yang didukung, serta pembacaan ulang hasil.
 3. **Tinjau dan simpan:** perbandingan gambar/OCR, sumber tiap area/baris, potongan kedua foto, penanda belum pulih, unduhan JPG/TXT/PDF/JSON, dan jejak keputusan.
 
-Maksimal dua foto dari satu halaman datar. Tiap foto maksimal 12 MB / 24 MP; total request maksimal 25 MB. PDF dan HEIC sebagai input belum didukung. Mode lokal tidak memakai layanan OCR eksternal atau menyimpan riwayat server. Mode AWS memproses unggahan di AWS dan diberi label di UI.
+Paket maksimal 20 halaman. PDF maksimal 20 MB; tiap foto maksimal 12 MB / 24 MP. Pemulihan memakai dua foto per halaman. Ekspor paket maksimal 80 MB per request. HEIC, PDF bersandi, serta PDF interaktif/bertanda tangan belum didukung. Mode lokal tidak memakai layanan OCR eksternal atau menyimpan riwayat server. Mode AWS memproses unggahan di AWS dan diberi label di UI.
 
 ## Pengujian
 

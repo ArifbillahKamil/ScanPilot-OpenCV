@@ -3,11 +3,12 @@ let busy = false;
 let currentData = null;
 let alignedView = false;
 let currentView = "compare";
+let lastErrorMessage = null;
 const alignmentButton = $("alignment-button");
 const sampleJump = document.createElement("a");
 sampleJump.href = "#sample-library";
 sampleJump.className = "sample-jump";
-sampleJump.textContent = "Belum ada foto? Coba contoh ↓";
+sampleJump.textContent = tr("Belum ada foto? Coba contoh ↓");
 document.querySelector(".samples").id = "sample-library";
 document.querySelector(".upload-copy").append(sampleJump);
 function phase(value) {
@@ -28,8 +29,8 @@ function updateComparison() {
     ? currentData.aligned
     : currentData.original;
   alignmentButton.textContent = alignedView
-    ? "Lihat foto awal"
-    : "Sejajarkan halaman";
+    ? tr("Lihat foto awal")
+    : tr("Sejajarkan halaman");
   alignmentButton.setAttribute("aria-pressed", String(alignedView));
   $("comparison").dataset.mode = currentView;
   document
@@ -44,19 +45,19 @@ function updateComparison() {
   $("compare-control").hidden = currentView !== "compare";
   $("before-label").hidden = currentView === "result";
   $("after-label").hidden = currentView === "original";
-  $("before-label").textContent = alignedView ? "HALAMAN SEJAJAR" : "FOTO AWAL";
+  $("before-label").textContent = alignedView ? tr("HALAMAN SEJAJAR") : tr("FOTO AWAL");
   if (currentView === "original") {
     $("after-layer").style.clipPath = "inset(0 0 0 100%)";
-    $("canvas-caption").textContent = "Foto masukan, tanpa koreksi.";
+    $("canvas-caption").textContent = tr("Foto masukan, tanpa koreksi.");
   } else if (currentView === "result") {
     $("after-layer").style.clipPath = "inset(0)";
     $("canvas-caption").textContent =
-      "Hasil koreksi untuk ditinjau. Isi dan angka belum diverifikasi.";
+      tr("Hasil koreksi untuk ditinjau. Isi dan angka belum diverifikasi.");
   } else {
     split();
     $("canvas-caption").textContent = alignedView
-      ? "Kedua halaman sejajar. Geser pembatas untuk membandingkan cahaya."
-      : "Geser pembatas untuk membandingkan. Sejajarkan halaman jika posisinya berbeda.";
+      ? tr("Kedua halaman sejajar. Geser pembatas untuk membandingkan cahaya.")
+      : tr("Geser pembatas untuk membandingkan. Sejajarkan halaman jika posisinya berbeda.");
   }
 }
 alignmentButton.addEventListener("click", () => {
@@ -71,13 +72,14 @@ document.querySelectorAll("button[data-view]").forEach((button) =>
   }),
 );
 const names = {
-  covered: "Contoh / teks tertutup",
-  perspective: "Contoh · halaman miring",
-  shadow: "Contoh · bayangan",
-  blur: "Contoh · kurang fokus",
+  covered: tr("Contoh / teks tertutup"),
+  perspective: tr("Contoh · halaman miring"),
+  shadow: tr("Contoh · bayangan"),
+  blur: tr("Contoh · kurang fokus"),
 };
 function setBusy(value) {
   busy = value;
+  if ($('language-select')) $('language-select').disabled = value;
   $("processing").hidden = !value;
   document
     .querySelectorAll(
@@ -90,9 +92,10 @@ function setBusy(value) {
   if (typeof recoveryBusy === "function") recoveryBusy(value);
 }
 function showError(message) {
+  lastErrorMessage = message;
   $("error").textContent =
-    message +
-    (currentData ? " Hasil dokumen sebelumnya tetap ditampilkan." : "");
+    tr(message) +
+    (currentData ? tr(" Hasil dokumen sebelumnya tetap ditampilkan.") : "");
   $("error").hidden = false;
   $("error").scrollIntoView({ block: "nearest" });
 }
@@ -102,7 +105,7 @@ function split() {
   $("divider").style.left = x + "%";
 }
 function display(data, name, isSample) {
-  $("filename").textContent = name;
+  $("filename").textContent = isSample ? tr(name) : name;
   $("empty").hidden = true;
   $("comparison").hidden = false;
   $("compare-control").hidden = false;
@@ -118,25 +121,44 @@ function display(data, name, isSample) {
   document.querySelector(".inspector").classList.toggle("retake", retake);
   document.querySelector(".inspector").classList.toggle("review", !retake);
   $("status-kicker").textContent = retake
-    ? "PERLU FOTO ULANG"
-    : "KOREKSI TERSEDIA";
+    ? tr("PERLU FOTO ULANG")
+    : tr("KOREKSI TERSEDIA");
   $("status-icon").textContent = retake ? "↻" : "✓";
   $("status-title").textContent = retake
-    ? "Satu foto lagi."
-    : "Hasilnya siap ditinjau.";
-  $("instruction").textContent = data.instruction;
+    ? tr("Satu foto lagi.")
+    : tr("Hasilnya siap ditinjau.");
+  $("instruction").textContent = tr(data.instruction);
+  if (data.page_estimated) {
+    $("status-kicker").textContent = tr("PERSPEKTIF DILURUSKAN");
+    $("status-title").textContent = tr("Periksa batas halaman.");
+  }
+  $("diagnosis").hidden = false;
+  const issues = data.issues || [];
+  $("diagnosis-summary").textContent = issues.length
+    ? tr("{0} masalah terindikasi pada foto awal.", [issues.length])
+    : tr("Tidak ada masalah kualitas utama yang terdeteksi.");
+  $("diagnosis-list").replaceChildren();
+  issues.forEach(issue => {
+    const li = document.createElement("li"), label = document.createElement("strong"), action = document.createElement("span");
+    label.textContent = tr(issue.label);
+    action.textContent = tr(issue.action);
+    li.dataset.state = issue.action === "Diperbaiki" ? "good" : "attention";
+    li.append(label, action);
+    $("diagnosis-list").append(li);
+  });
   $("page-check").textContent = data.page_detected
-    ? "Terdeteksi"
-    : "Belum jelas";
+    ? tr("Terdeteksi")
+    : tr("Belum jelas");
   $("focus-check").textContent =
-    data.before.sharpness < 45 ? "Perlu foto ulang" : "Cukup untuk tinjauan";
+    data.before.sharpness < 45 ? tr("Perlu foto ulang") : tr("Cukup untuk tinjauan");
   $("light-check").textContent =
     data.before.uneven_light > 0.16
       ? data.after.uneven_light < data.before.uneven_light
-        ? "Diperbaiki"
-        : "Perlu ditinjau"
-      : "Relatif merata";
+        ? tr("Diperbaiki")
+        : tr("Perlu ditinjau")
+      : tr("Relatif merata");
   $("page-check").dataset.state = data.page_detected ? "good" : "attention";
+  if (data.page_estimated) $("page-check").textContent = tr("Perkiraan dari tepi");
   $("focus-check").dataset.state =
     data.before.sharpness < 45 ? "attention" : "good";
   $("light-check").dataset.state =
@@ -146,8 +168,8 @@ function display(data, name, isSample) {
       : "good";
   $("result-actions").hidden = false;
   $("replace-button").textContent = retake
-    ? "Pilih foto pengganti"
-    : "Periksa foto lain";
+    ? tr("Pilih foto pengganti")
+    : tr("Periksa foto lain");
   $("download").href = data.result;
   $("download").hidden = retake;
   $("trace-box").hidden = false;
@@ -155,25 +177,25 @@ function display(data, name, isSample) {
   data.trace.forEach((step) => {
     const li = document.createElement("li"),
       title = document.createElement("strong");
-    title.textContent = step.title;
-    li.append(title, document.createTextNode(step.detail));
+    title.textContent = tr(step.title);
+    li.append(title, document.createTextNode(tr(step.detail)));
     $("trace").append(li);
   });
   const li = document.createElement("li");
-  li.textContent = `Ketajaman: ${data.before.sharpness} → ${data.after.sharpness}. Variasi cahaya: ${data.before.uneven_light} → ${data.after.uneven_light}. Waktu pemrosesan: ${data.elapsed_ms} ms.`;
+  li.textContent = tr("Ketajaman: {0} → {1}. Variasi cahaya: {2} → {3}. Waktu pemrosesan: {4} ms.", [data.before.sharpness, data.after.sharpness, data.before.uneven_light, data.after.uneven_light, data.elapsed_ms]);
   $("trace").append(li);
   $("engine").textContent =
     `OPENCV ${data.opencv} / ${data.runtime && data.runtime !== "local" ? "AWS ECS" : "LOCAL BUILD"}`;
   if (typeof renderRecovery === "function") renderRecovery(data);
-  $("status-title").focus({ preventScroll: true });
-  if (matchMedia("(max-width:800px)").matches)
+  if (!refreshingLanguage) $("status-title").focus({ preventScroll: true });
+  if (!refreshingLanguage && matchMedia("(max-width:800px)").matches)
     document.querySelector(".inspector").scrollIntoView({ block: "start" });
 }
 async function inspect(file, name, isSample = false) {
   if (busy) return false;
   $("error").hidden = true;
   if (file.size > 12 * 1024 * 1024) {
-    showError("Ukuran maksimal 12 MB. Pilih foto yang lebih kecil.");
+    showError(tr("Ukuran maksimal 12 MB. Pilih foto yang lebih kecil."));
     return false;
   }
   setBusy(true);
@@ -186,7 +208,7 @@ async function inspect(file, name, isSample = false) {
       throw new Error(
         typeof data.detail === "string"
           ? data.detail
-          : "Gambar belum dapat diproses.",
+          : tr("Gambar belum dapat diproses."),
       );
     registerFirstPhoto(file, isSample);
     display(data, name, isSample);
@@ -198,7 +220,7 @@ async function inspect(file, name, isSample = false) {
   } catch (error) {
     showError(
       error.message === "Failed to fetch"
-        ? "Server lokal tidak terhubung. Jalankan kembali ScanPilot."
+        ? tr("Server lokal tidak terhubung. Jalankan kembali ScanPilot.")
         : error.message,
     );
     return false;
@@ -265,8 +287,8 @@ document.querySelectorAll("[data-sample]").forEach((button) => {
     setBusy(true);
     $("error").hidden = true;
     try {
-      const response = await fetch("/api/sample/" + button.dataset.sample);
-      if (!response.ok) throw new Error("Contoh tidak dapat dimuat.");
+      const response = await fetch("/api/sample/" + button.dataset.sample + '?lang=' + language);
+      if (!response.ok) throw new Error(tr("Contoh tidak dapat dimuat."));
       const blob = await response.blob();
       setBusy(false);
       const success = await inspect(blob, names[button.dataset.sample], true);

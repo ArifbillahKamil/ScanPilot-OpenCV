@@ -49,6 +49,7 @@ def shot(name):
 
 
 call('Runtime.enable');call('Page.enable')
+call('Page.addScriptToEvaluateOnNewDocument',{'source':"localStorage.setItem('scanpilot-language','id')"})
 call('Emulation.setDeviceMetricsOverride',{'width':1440,'height':1050,'deviceScaleFactor':1,'mobile':False})
 call('Page.navigate',{'url':'http://127.0.0.1:8765'})
 wait("typeof recoverPhoto==='function' && document.querySelector('[data-sample=covered]')")

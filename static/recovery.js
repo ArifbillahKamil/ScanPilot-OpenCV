@@ -1,10 +1,16 @@
 // All document/OCR content is inserted with textContent, never HTML.
 let firstPhoto = null;
 let secondPhoto = null;
+let firstIsSample = false;
+let firstSampleLanguage = 'en';
+let secondIsSample = false;
+let secondPhotoName = '';
+let runtimeMode = null;
 let manualRegions = [];
 let selectingArea = false;
 let selectionStart = null;
 let selectedBox = null;
+let sourceFocusOrigin = null;
 let exportUrls = [];
 const recoverySection = document.createElement("section");
 recoverySection.id = "recovery";
@@ -30,9 +36,40 @@ recoverySection.innerHTML = `
     </div>
   </div><input id="second-input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" hidden>`;
 $("about").before(recoverySection);
+const successPanel = document.createElement("section");
+successPanel.id = "recovered-preview";
+successPanel.hidden = true;
+successPanel.setAttribute("aria-labelledby", "recovered-preview-title");
+successPanel.innerHTML = '<span class="section-label" id="recovered-preview-kicker"></span><h3 id="recovered-preview-title"></h3><p id="recovered-preview-note"></p><div id="recovered-preview-lines"></div>';
+document.querySelector(".second-step").after(successPanel);
+const reviewRecovered = document.createElement("button");
+reviewRecovered.id = "review-recovered";
+reviewRecovered.className = "primary";
+reviewRecovered.hidden = true;
+reviewRecovered.addEventListener("click", () => {
+  const region=currentData.regions.find(r=>r.status==="recovered");
+  if(region) {
+    showSource(region.box,tr("Foto 2"),tr("Bandingkan area sebelum dan sesudah. Piksel pengganti berasal dari foto kedua."));
+    $("close-source").focus({preventScroll:true});
+  }
+});
+const downloadReviewed = document.createElement("button");
+downloadReviewed.id = "download-reviewed";
+downloadReviewed.hidden = true;
+downloadReviewed.addEventListener("click", () => $("export-pdf").click());
+document.querySelector(".second-actions").prepend(reviewRecovered,downloadReviewed);
+const mobileReview=document.createElement("button");
+mobileReview.id="mobile-review-recovered";
+mobileReview.hidden=true;
+mobileReview.addEventListener("click",()=>{
+  successPanel.scrollIntoView({block:"start"});
+  const first=successPanel.querySelector("button");
+  if(first) first.focus({preventScroll:true});
+});
+document.querySelector(".recovery-heading").append(mobileReview);
 const readingChoice = document.createElement("select");
 readingChoice.id = "reading-view";
-readingChoice.setAttribute("aria-label", "Bandingkan bacaan OCR");
+readingChoice.setAttribute("aria-label", tr("Bandingkan bacaan OCR"));
 readingChoice.innerHTML =
   '<option value="result">OCR hasil</option><option value="first">OCR foto 1 / sejajar</option>';
 $("ocr-lines").before(readingChoice);
@@ -47,7 +84,7 @@ readingChoice.addEventListener("change", () =>
 const continueRecovery = document.createElement("button");
 continueRecovery.id = "continue-recovery";
 continueRecovery.className = "primary";
-continueRecovery.textContent = "Lanjutkan pemulihan";
+continueRecovery.textContent = tr("Lanjutkan pemulihan");
 continueRecovery.hidden = true;
 continueRecovery.addEventListener("click", () => {
   recoverySection.scrollIntoView({ block: "start" });
@@ -62,6 +99,10 @@ function recoveryBusy(value) {
   continueRecovery.disabled = value;
 }
 function registerFirstPhoto(file, isSample) {
+  firstIsSample = isSample;
+  firstSampleLanguage = language;
+  secondIsSample = false;
+  secondPhotoName = '';
   firstPhoto = file;
   secondPhoto = null;
   manualRegions = [];
@@ -104,7 +145,7 @@ function drawRegions() {
   );
   $("region-list").replaceChildren();
   (currentData.regions || []).forEach((region, i) => {
-    const label = `Area ${i + 1}: ${region.status === "recovered" ? "Dari foto 2" : "Perlu bukti"}`;
+    const label = tr("Area {0}: {1}", [i + 1, region.status === "recovered" ? tr("Dari foto 2") : region.reason === "low-ocr-score" ? tr("Bacaan OCR meragukan") : tr("Perlu bukti")]);
     overlay.append(
       rectangle(region.box, region.status, label, () =>
         showSource(region.box, label, region.note || region.label),
@@ -126,10 +167,10 @@ function drawRegions() {
       box[2] * currentData.width,
       box[3] * currentData.height,
     ];
-    overlay.append(rectangle(pixels, "selected", `Pilihan ${i + 1}`));
+    overlay.append(rectangle(pixels, "selected", tr("Pilihan {0}", [i + 1])));
     const button = document.createElement("button");
     button.className = "region-item";
-    button.textContent = `Hapus pilihan ${i + 1}`;
+    button.textContent = tr("Hapus pilihan {0}", [i + 1]);
     button.addEventListener("click", () => {
       manualRegions.splice(i, 1);
       drawRegions();
@@ -137,7 +178,7 @@ function drawRegions() {
     $("region-list").append(button);
   });
   if (selectedBox)
-    overlay.append(rectangle(selectedBox, "focus", "Baris yang dipilih"));
+    overlay.append(rectangle(selectedBox, "focus", tr("Baris yang dipilih")));
 }
 async function drawCrop(canvasId, url, box) {
   const img = new Image();
@@ -158,20 +199,21 @@ async function drawCrop(canvasId, url, box) {
     .drawImage(img, left, top, width, height, 0, 0, width, height);
 }
 function showSource(box, title, note) {
+  if(!refreshingLanguage && $("source-inspect").hidden) sourceFocusOrigin=document.activeElement;
   selectedBox = box;
   drawRegions();
   $("source-inspect").hidden = false;
-  $("source-title").textContent = title;
-  $("source-note").textContent = note;
+  $("source-title").textContent = tr(title);
+  $("source-note").textContent = tr(note);
   drawCrop("source-one", currentData.aligned, box).catch(() =>
-    showError("Pratinjau sumber belum dapat dibaca."),
+    showError(tr("Pratinjau sumber belum dapat dibaca.")),
   );
   $("source-two-figure").hidden = !currentData.second_aligned;
   if (currentData.second_aligned)
     drawCrop("source-two", currentData.second_aligned, box).catch(() =>
-      showError("Pratinjau foto kedua belum dapat dibaca."),
+      showError(tr("Pratinjau foto kedua belum dapat dibaca.")),
     );
-  $("source-inspect").scrollIntoView({ block: "nearest" });
+  if (!refreshingLanguage) $("source-inspect").scrollIntoView({ block: "nearest" });
 }
 function renderRecovery(data, readingOnly = false) {
   if (!data.ocr_available) return;
@@ -184,62 +226,97 @@ function renderRecovery(data, readingOnly = false) {
   const unresolved = data.regions.filter(
     (r) => r.status === "unresolved",
   ).length;
+  const recovered = data.regions.filter(r=>r.status==="recovered").length;
+  const changedLines=(currentData.lines||[]).filter(line=>line.source==="photo-2");
+  const hasRecovery = recovered > 0;
+  recoverySection.dataset.recovered=String(hasRecovery);
+  reviewRecovered.hidden = !hasRecovery;
+  mobileReview.hidden = !hasRecovery;
+  mobileReview.textContent=tr("Tinjau teks yang pulih");
+  downloadReviewed.hidden = !hasRecovery;
+  reviewRecovered.textContent=tr("Tinjau teks yang pulih");
+  downloadReviewed.textContent=tr("Unduh PDF tinjauan");
+  $("add-photo").classList.toggle("primary",!hasRecovery);
+  $("add-photo").classList.toggle("text-action",hasRecovery);
+  $("demo-recovery").hidden=!firstIsSample || !!data.second_aligned;
+  successPanel.hidden=!hasRecovery;
+  $("recovered-preview-kicker").textContent=tr("DARI FOTO KEDUA");
+  $("recovered-preview-title").textContent=tr("Ini yang berhasil dibaca kembali.");
+  $("recovered-preview-note").textContent=tr("Klik bacaan untuk membandingkan bukti kedua foto. Teks OCR tetap perlu diperiksa.");
+  $("recovered-preview-lines").replaceChildren();
+  changedLines.slice(0,3).forEach(line=>{
+    const button=document.createElement("button");
+    button.className="recovered-excerpt";
+    const text=document.createElement("span"), action=document.createElement("small");
+    text.textContent=line.text;
+    action.textContent=tr("Lihat bukti");
+    button.append(text,action);
+    button.addEventListener("click",()=>showSource(line.box,tr("Foto 2"),tr("Bacaan OCR: {0}. Skor {1}%.",[line.text,Math.round(line.score*100)])));
+    $("recovered-preview-lines").append(button);
+  });
+  if(!changedLines.length) $("recovered-preview-note").textContent=tr("Area dipulihkan dari foto kedua. Sebagian baris menggabungkan kedua sumber; periksa buktinya.");
   continueRecovery.hidden = !unresolved;
   $("replace-button").classList.toggle("secondary-replace", !!unresolved);
-  $("recovery-summary").textContent =
-    `${data.regions.filter((r) => r.status === "recovered").length} area dipulihkan / ${unresolved} perlu bukti`;
+  $("recovery-summary").textContent = (recovered===1 ? tr("1 area berhasil dipulihkan.") : tr("{0} area berhasil dipulihkan.",[recovered])) + " " +
+    (unresolved ? tr("Area terdeteksi yang masih perlu bukti: {0}.",[unresolved]) : tr("Semua area yang ditandai telah ditangani. Tetap tinjau isi dokumen."));
+  if(!data.regions.length) $("recovery-summary").textContent=tr("Belum ada area pemulihan yang ditandai.");
   $("second-title").textContent = data.second_aligned
     ? unresolved
-      ? "Masih ada yang perlu dilihat."
-      : "Dua foto, satu hasil tinjauan."
-    : "Satu sudut pandang lagi.";
+      ? tr("Masih ada yang perlu dilihat.")
+      : tr("Dua foto, satu hasil tinjauan.")
+    : tr("Satu sudut pandang lagi.");
   $("second-instruction").textContent = unresolved
-    ? data.instruction
-    : "Tinjau bacaan di bawah. Jika ada bagian yang terlewat, tandai pada halaman sebelum menambahkan foto kedua.";
+    ? tr(data.instruction)
+    : hasRecovery ? tr("Bagian yang ditandai sudah memiliki bukti dari foto kedua. Bandingkan sumbernya, lalu simpan hasil untuk ditinjau.") : tr("Tinjau bacaan di bawah. Jika ada bagian yang terlewat, tandai pada halaman sebelum menambahkan foto kedua.");
   $("add-photo").textContent = data.second_aligned
-    ? "Ganti foto kedua"
-    : "Tambahkan foto kedua";
+    ? tr("Ganti foto kedua")
+    : tr("Tambahkan foto kedua");
   $("original-evidence").hidden = !data.second_original;
   if (data.second_original) $("second-original").src = data.second_original;
   $("ocr-lines").replaceChildren();
-  $("line-count").textContent = `${data.lines.length} baris`;
+  $("line-count").textContent = tr("{0} baris", [data.lines.length]);
   if (!data.lines.length) {
     const p = document.createElement("p");
     p.className = "empty-reading";
-    p.textContent = "Teks belum terbaca. Coba foto lebih tajam.";
+    p.textContent = tr("Teks belum terbaca. Coba foto lebih tajam.");
     $("ocr-lines").append(p);
   }
   data.lines.forEach((line) => {
     const button = document.createElement("button");
     button.className = "ocr-line";
+    button.dataset.source = line.source;
     const text = document.createElement("span");
     text.textContent = line.text;
     const meta = document.createElement("small");
     const source =
       line.source === "photo-2"
-        ? "Foto 2"
+        ? tr("Foto 2")
         : line.source === "mixed"
-          ? "Foto 1 + 2"
-          : "Foto 1";
-    meta.textContent = `${source} / skor ${Math.round(line.score * 100)}%${line.uncertain || line.unresolved ? " / tinjau" : ""}`;
+          ? tr("Foto 1 + 2")
+          : tr("Foto 1");
+    meta.textContent = tr("{0} / skor {1}%{2}", [source, Math.round(line.score * 100), line.uncertain || line.unresolved ? tr(" / tinjau") : ""]);
     button.dataset.uncertain = String(line.uncertain || line.unresolved);
     button.append(text, meta);
     button.addEventListener("click", () =>
       showSource(
         line.box,
         source,
-        `Bacaan OCR: ${line.text}. Skor ${Math.round(line.score * 100)}%.`,
+        tr("Bacaan OCR: {0}. Skor {1}%.", [line.text, Math.round(line.score * 100)]),
       ),
     );
     $("ocr-lines").append(button);
   });
+  if(hasRecovery && !readingOnly && !refreshingLanguage) {
+    const firstChanged=$("ocr-lines").querySelector('[data-source="photo-2"]');
+    if(firstChanged) $("ocr-lines").scrollTop=firstChanged.offsetTop-$("ocr-lines").offsetTop;
+  }
   $("export-note").textContent = unresolved
-    ? `${unresolved} area belum pulih. Ekspor adalah bahan tinjauan; penanda ketidakpastian disertakan dalam teks dan laporan.`
-    : "Hasil OCR tetap perlu diperiksa. Laporan menyertakan koordinat area dan sumbernya.";
+    ? tr("{0} area belum pulih. Ekspor adalah bahan tinjauan; penanda ketidakpastian disertakan dalam teks dan laporan.", [unresolved])
+    : tr("Hasil OCR tetap perlu diperiksa. Laporan menyertakan koordinat area dan sumbernya.");
 }
 function addArea(box) {
   if (manualRegions.length >= 10) {
-    showError("Maksimal sepuluh area tambahan.");
+    showError(tr("Maksimal sepuluh area tambahan."));
     return;
   }
   if (
@@ -250,14 +327,14 @@ function addArea(box) {
     box[0] + box[2] > 1.001 ||
     box[1] + box[3] > 1.001
   ) {
-    showError("Posisi dan ukuran area harus berada di dalam halaman.");
+    showError(tr("Posisi dan ukuran area harus berada di dalam halaman."));
     return;
   }
   manualRegions.push(box);
   selectedBox = null;
   drawRegions();
   $("selection-help").textContent =
-    "Area ditandai. Tambahkan foto kedua yang memperlihatkan bagian ini.";
+    tr("Area ditandai. Tambahkan foto kedua yang memperlihatkan bagian ini.");
 }
 $("add-coordinates").addEventListener("click", () =>
   addArea(["x", "y", "w", "h"].map((k) => Number($("area-" + k).value) / 100)),
@@ -267,8 +344,8 @@ $("mark-area").addEventListener("click", () => {
   $("mark-area").setAttribute("aria-pressed", String(selectingArea));
   $("evidence-page").classList.toggle("selecting", selectingArea);
   $("selection-help").textContent = selectingArea
-    ? "Tarik kotak mengelilingi bagian yang kurang jelas. Atau gunakan input persentase di bawah."
-    : "Klik area berwarna untuk melihat sumbernya.";
+    ? tr("Tarik kotak mengelilingi bagian yang kurang jelas. Atau gunakan input persentase di bawah.")
+    : tr("Klik area berwarna untuk melihat sumbernya.");
 });
 function point(event) {
   const b = $("evidence-overlay").getBoundingClientRect();
@@ -318,6 +395,7 @@ $("close-source").addEventListener("click", () => {
   $("source-inspect").hidden = true;
   selectedBox = null;
   drawRegions();
+  if(sourceFocusOrigin?.isConnected) sourceFocusOrigin.focus({preventScroll:true});
 });
 $("add-photo").addEventListener("click", () => {
   if (!busy) {
@@ -329,10 +407,10 @@ $("second-input").addEventListener("change", (event) => {
   const file = event.target.files[0];
   if (file) recoverPhoto(file, file.name);
 });
-async function recoverPhoto(file, name) {
+async function recoverPhoto(file, name, isSample = false) {
   if (busy || !firstPhoto) return false;
   if (file.size > 12 * 1024 * 1024) {
-    showError("Ukuran maksimal 12 MB.");
+    showError(tr("Ukuran maksimal 12 MB."));
     return false;
   }
   $("error").hidden = true;
@@ -341,6 +419,7 @@ async function recoverPhoto(file, name) {
     const body = new FormData();
     body.append("first", firstPhoto, "first.jpg");
     body.append("second", file, "second.jpg");
+    if(window.packageWorkspace?.frame) body.append('first_page_frame','true');
     const retained = (currentData.regions || [])
       .filter((r) => r.reason === "user-selected")
       .map((r) => [
@@ -356,12 +435,14 @@ async function recoverPhoto(file, name) {
       throw new Error(
         typeof data.detail === "string"
           ? data.detail
-          : "Foto kedua belum dapat diproses.",
+          : tr("Foto kedua belum dapat diproses."),
       );
     secondPhoto = file;
+    secondPhotoName = name;
+    secondIsSample = isSample;
     manualRegions = [];
     display(data, $("filename").textContent, false);
-    $("second-name").textContent = `Foto kedua: ${name}`;
+    $("second-name").textContent = tr("Foto kedua: {0}", [name]);
     recoverySection.scrollIntoView({ block: "start" });
     return true;
   } catch (error) {
@@ -374,11 +455,12 @@ async function recoverPhoto(file, name) {
 $("demo-recovery").addEventListener("click", async () => {
   if (busy) return;
   try {
-    const response = await fetch("/api/sample/second");
-    if (!response.ok) throw new Error("Contoh foto kedua tidak dapat dimuat.");
+    const response = await fetch("/api/sample/second?lang=" + firstSampleLanguage);
+    if (!response.ok) throw new Error(tr("Contoh foto kedua tidak dapat dimuat."));
     await recoverPhoto(
       await response.blob(),
-      "Contoh sintetis / penghalang dipindahkan",
+      tr("Contoh sintetis / penghalang dipindahkan"),
+      true,
     );
   } catch (error) {
     showError(error.message);
@@ -399,10 +481,10 @@ function saveBlob(blob, name) {
 function reviewText() {
   const missing = currentData.regions.filter((r) => r.status === "unresolved");
   const header = [
-    "SCANPILOT / HASIL OCR UNTUK DITINJAU",
-    "Isi belum diverifikasi manusia.",
+    tr("SCANPILOT / HASIL OCR UNTUK DITINJAU"),
+    tr("Isi belum diverifikasi manusia."),
     ...missing.map(
-      (r) => `[AREA BELUM PULIH: ${r.id}, koordinat ${r.box.join(", ")}]`,
+      (r) => tr("[AREA BELUM PULIH: {0}, koordinat {1}]", [r.id, r.box.join(", ")]),
     ),
     "",
   ];
@@ -410,7 +492,7 @@ function reviewText() {
     .concat(
       currentData.lines.map(
         (line) =>
-          `${line.uncertain || line.unresolved ? "[TINJAU] " : ""}${line.text}`,
+          `${line.uncertain || line.unresolved ? tr("[TINJAU] ") : ""}${line.text}`,
       ),
     )
     .join("\n");
@@ -429,10 +511,11 @@ async function fileHash(file) {
   ).join("");
 }
 $("export-report").addEventListener("click", async () => {
-  const data = currentData;
+  const data = localizedEvidence(currentData);
   const files = [firstPhoto, secondPhoto];
   const report = {
     schema: "scanpilot-evidence-v1",
+    language,
     created_at: new Date().toISOString(),
     status: data.status,
     verified_by_human: false,
@@ -459,9 +542,9 @@ $("export-report").addEventListener("click", async () => {
         })),
     ),
     limitations: [
-      "Skor OCR bukan probabilitas kebenaran terkalibrasi.",
-      "Penutup putih dan bagian yang sepenuhnya hilang mungkin tidak terdeteksi.",
-      "Satu halaman datar; maksimal dua foto.",
+      tr("Skor OCR bukan probabilitas kebenaran terkalibrasi."),
+      tr("Penutup putih dan bagian yang sepenuhnya hilang mungkin tidak terdeteksi."),
+      tr("Satu halaman datar; maksimal dua foto."),
     ],
     opencv: data.opencv,
   };
@@ -493,7 +576,7 @@ $("export-pdf").addEventListener("click", async () => {
     ctx.fillStyle = "#172b4d";
     ctx.font = "14px sans-serif";
     ctx.fillText(
-      "SCANPILOT / UNTUK DITINJAU - kotak jingga: area belum pulih",
+      tr("SCANPILOT / UNTUK DITINJAU - kotak jingga: area belum pulih"),
       12,
       img.height + 32,
     );
@@ -503,7 +586,7 @@ $("export-pdf").addEventListener("click", async () => {
     const body = new FormData();
     body.append("file", blob, "review.jpg");
     const response = await fetch("/api/export/pdf", { method: "POST", body });
-    if (!response.ok) throw new Error("PDF belum dapat dibuat.");
+    if (!response.ok) throw new Error(tr("PDF belum dapat dibuat."));
     saveBlob(await response.blob(), "scanpilot-review.pdf");
   } catch (error) {
     showError(error.message);
@@ -511,15 +594,24 @@ $("export-pdf").addEventListener("click", async () => {
     setBusy(false);
   }
 });
+function updateRuntimeCopy(updateCaption = true) {
+  const local = runtimeMode === 'local';
+  document.querySelector('footer > span').textContent = tr(local
+    ? 'Mode lokal / Foto diproses di server laptop; tidak disimpan sebagai riwayat.'
+    : 'Mode AWS / Foto diproses di server AWS; tidak disimpan sebagai riwayat.');
+  if(updateCaption&&!currentData) $('canvas-caption').textContent = tr(local
+    ? 'Foto diproses melalui server lokal.' : 'Foto diproses melalui server AWS.');
+}
 fetch("/api/health")
   .then((r) => r.json())
   .then((data) => {
+    runtimeMode = data.mode;
     const local = data.mode === "local";
     document.querySelector("footer > span").textContent = local
-      ? "Mode lokal / Foto diproses di server laptop; tidak disimpan sebagai riwayat."
-      : "Mode AWS / Foto diproses di server AWS; tidak disimpan sebagai riwayat.";
-    $("canvas-caption").textContent = local
-      ? "Foto diproses melalui server lokal."
-      : "Foto diproses melalui server AWS.";
+      ? tr("Mode lokal / Foto diproses di server laptop; tidak disimpan sebagai riwayat.")
+      : tr("Mode AWS / Foto diproses di server AWS; tidak disimpan sebagai riwayat.");
+    if (!currentData) $("canvas-caption").textContent = local
+      ? tr("Foto diproses melalui server lokal.")
+      : tr("Foto diproses melalui server AWS.");
   })
   .catch(() => {});

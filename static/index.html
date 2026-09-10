@@ -1,30 +1,35 @@
 <!doctype html>
-<html lang="id">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#ffffff" />
-    <title>ScanPilot &#8212; Dokumen lebih terbaca</title>
+    <title>ScanPilot — Read clearly. Recover with evidence.</title>
     <link rel="stylesheet" href="/static/style.css?v=2" />
     <link rel="stylesheet" href="/static/stripe-direction.css?v=3" />
-    <script src="/static/app.js?v=3" defer></script>
-    <link rel="stylesheet" href="/static/recovery.css?v=4" />
-    <script src="/static/recovery.js?v=4" defer></script>
+    <script src="/static/translations.js?v=7" defer></script>
+    <script src="/static/i18n.js?v=7" defer></script>
+    <script src="/static/app.js?v=7" defer></script>
+    <link rel="stylesheet" href="/static/recovery.css?v=7" />
+    <script src="/static/recovery.js?v=7" defer></script>
+    <link rel="stylesheet" href="/static/i18n.css?v=7" />
+    <script src="/static/package.js?v=8" defer></script>
+    <link rel="stylesheet" href="/static/package.css?v=8" />
   </head>
   <body data-phase="upload">
     <div class="hero-colorfield" aria-hidden="true"></div>
-    <a class="skip-link" href="#upload-main">Lewati ke unggah foto</a>
+    <a class="skip-link" href="#upload-main">Skip to photo upload</a>
     <header>
-      <a class="brand" href="/" aria-label="ScanPilot beranda"
+      <a class="brand" href="/" aria-label="ScanPilot home"
         ><svg viewBox="0 0 36 36" aria-hidden="true">
           <path
             d="M5 14V5h9M22 5h9v9M31 22v9h-9M14 31H5v-9M11 18h14M18 11v14"
           /></svg
         ><span>scanpilot<b>.</b></span></a
       >
-      <nav class="top-nav" aria-label="Navigasi utama">
-        <a href="#workbench">Periksa dokumen</a
-        ><a href="#sample-library">Contoh foto</a>
+      <nav class="top-nav" aria-label="Main navigation">
+        <a href="#workbench">Check a document</a
+        ><a href="#sample-library">Sample photos</a>
       </nav>
       <button
         id="about-button"
@@ -32,40 +37,39 @@
         aria-expanded="false"
         aria-controls="about"
       >
-        <span>?</span> Panduan
+        <span>?</span> Guide
       </button>
     </header>
     <main>
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-copy">
           <p class="hero-eyebrow">
-            <span></span> FOTO LEBIH BAIK, LANGKAH DEMI LANGKAH
+            <span></span> A CLEARER DOCUMENT, PAGE BY PAGE
           </p>
-          <h1 id="hero-title">Dokumenmu,<br />lebih mudah<br />dibaca.</h1>
+          <h1 id="hero-title">Documents,<br />made clearer<br />with evidence.</h1>
           <p class="hero-description">
-            Buka bagian yang tertutup dengan foto kedua. Pulihkan teks dari
-            bukti gambar, lalu periksa sumber setiap bagiannya.
+            Check an entire PDF or photo set. Find the pages that need attention, recover missing detail with another photo, and export one reviewed document.
           </p>
           <div class="hero-actions">
             <button id="hero-upload" class="hero-primary">
-              Mulai periksa <span aria-hidden="true">&rarr;</span></button
+              Start checking <span aria-hidden="true">&rarr;</span></button
             ><button id="hero-example" class="hero-secondary">
-              Coba contoh <span aria-hidden="true">&rarr;</span>
+              Try a sample <span aria-hidden="true">&rarr;</span>
             </button>
           </div>
           <p class="hero-note">
-            Tanpa akun <span>&middot;</span> JPG, PNG, WebP
+            No account needed <span>&middot;</span> PDF, JPG, PNG, WebP / up to 20 pages
           </p>
         </div>
         <div
           class="product-stage"
-          aria-label="Pratinjau ScanPilot menggunakan dokumen sintetis"
+          aria-label="ScanPilot preview using a synthetic document"
         >
           <div class="preview-backplate" aria-hidden="true"></div>
           <div class="preview-app">
             <div class="preview-app-header">
               <span class="mini-logo">scanpilot.</span
-              ><span>Ruang pemeriksaan</span
+              ><span>Document workspace</span
               ><span class="preview-dots" aria-hidden="true"
                 >&bull;&bull;&bull;</span
               >
@@ -76,91 +80,90 @@
                 ><span>&#9639;</span><span>&equiv;</span>
               </div>
               <div class="preview-document">
-                <div class="preview-file">INVOICE CONTOH <span>01</span></div>
+                <div class="preview-file">SAMPLE INVOICE <span>01</span></div>
                 <img
-                  src="/api/sample/clear"
-                  alt="Invoice sintetis sebagai contoh halaman dokumen"
+                  src="/api/sample/clear?lang=en"
+                  alt="Synthetic invoice used as a sample document"
                   width="220"
                   height="278"
                 /><span class="preview-caption"
-                  >Contoh halaman dengan cahaya merata</span
+                  >Sample page with even lighting</span
                 >
               </div>
             </div>
           </div>
           <div class="preview-phone">
             <div class="phone-speaker" aria-hidden="true"></div>
-            <div class="phone-heading">Foto dokumen <span>+</span></div>
+            <div class="phone-heading">Document photo <span>+</span></div>
             <div class="phone-photo">
               <img
-                src="/api/sample/perspective"
-                alt="Contoh foto invoice dengan perspektif miring"
+                src="/api/sample/perspective?lang=en"
+                alt="Sample invoice photographed at an angle"
                 width="155"
                 height="202"
               /><i aria-hidden="true"></i>
             </div>
-            <p>Empat sudut.<br />Satu halaman.</p>
+            <p>Four corners.<br />One page.</p>
             <button id="preview-try">
-              Coba foto ini <span aria-hidden="true">&rarr;</span></button
+              Try this photo <span aria-hidden="true">&rarr;</span></button
             ><span class="phone-home" aria-hidden="true"></span>
           </div>
           <div class="preview-process">
             <span class="process-symbol" aria-hidden="true">&nearr;</span>
             <div>
-              <strong>Setiap foto, langkah yang sesuai.</strong>
+              <strong>The right next step for each photo.</strong>
               <p>
-                Periksa <span>&rarr;</span> Perbaiki <span>&rarr;</span> Tinjau
+                Check <span>&rarr;</span> Improve <span>&rarr;</span> Review
               </p>
             </div>
           </div>
-          <p class="preview-disclaimer">PRATINJAU PRODUK / DOKUMEN SINTETIS</p>
+          <p class="preview-disclaimer">PRODUCT PREVIEW / SYNTHETIC DOCUMENT</p>
         </div>
       </section>
       <div class="workspace-intro">
         <div>
-          <span class="section-label">COBA LANGSUNG</span>
-          <h2>Satu foto. Kita mulai dari sini.</h2>
+          <span class="section-label">TRY IT YOURSELF</span>
+          <h2>One photo. Start here.</h2>
         </div>
         <p>
-          Pilih foto sendiri atau salah satu contoh.<br />Hasilnya bisa kamu
-          bandingkan langsung.
+          Choose your own photo or try a sample.<br />Compare the results side by side.
         </p>
       </div>
       <section class="work-heading" id="workbench">
         <div>
-          <span class="section-label">DOKUMEN / 01</span>
-          <h2>Pemeriksaan foto</h2>
+          <span class="section-label">DOCUMENT / 01</span>
+          <h2>Photo check</h2>
         </div>
-        <ol class="progress" aria-label="Progres pemeriksaan">
+        <ol class="progress" aria-label="Document review progress">
           <li data-step="upload" aria-current="step">
-            <span>1</span>Masukkan foto
+            <span>1</span>Upload photo
           </li>
-          <li data-step="processing"><span>2</span>Periksa</li>
-          <li data-step="review"><span>3</span>Tinjau hasil</li>
+          <li data-step="processing"><span>2</span>Check</li>
+          <li data-step="review"><span>3</span>Review result</li>
         </ol>
       </section>
       <div id="error" class="error" role="alert" hidden></div>
-      <section class="workspace" aria-label="Pemeriksaan foto dokumen">
+      <section class="workspace" aria-label="Document photo inspection">
         <div class="viewer-panel">
           <div class="viewer-toolbar">
             <div class="file-name">
               <svg viewBox="0 0 20 24" aria-hidden="true">
                 <path d="M3 1h9l5 5v17H3zM12 1v6h5M6 12h8M6 16h8" /></svg
-              ><span id="filename">Belum ada dokumen</span>
+              ><span id="filename">No document yet</span>
             </div>
-            <span id="file-meta">SATU HALAMAN</span>
+            <span id="file-meta">ONE PAGE</span>
           </div>
           <div
             class="view-switch"
             id="view-switch"
             hidden
             role="group"
-            aria-label="Tampilan dokumen"
+            aria-label="Document view"
           >
-            <button data-view="original" aria-pressed="false">Foto awal</button
+            <button data-view="original" aria-pressed="false">First photo</button
             ><button data-view="result" aria-pressed="false">
-              Hasil koreksi</button
-            ><button data-view="compare" aria-pressed="true">Bandingkan</button>
+              Processed result</button
+            ><button data-view="compare" aria-pressed="true">Compare</button>
           </div>
           <div id="dropzone" class="canvas">
             <div id="empty" class="empty-state">
@@ -173,48 +176,47 @@
                   <span class="page-foot">SCANPILOT / DOCUMENT INTAKE</span>
                 </div>
                 <div class="capture-cross">+</div>
-                <span class="capture-coordinate">HALAMAN / 01</span>
+                <span class="capture-coordinate">PAGE / 01</span>
               </div>
               <div class="upload-copy">
-                <h2>Taruh fotonya di sini.</h2>
-                <p>Satu halaman. Keempat sudut terlihat.</p>
+                <h2>Drop your photo here.</h2>
+                <p>One page. Keep all four corners visible.</p>
                 <button class="primary" id="upload-main">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 16V4m-5 5 5-5 5 5M4 16v4h16v-4" /></svg
-                  >Pilih foto dokumen</button
+                  >Choose document photo</button
                 ><span class="file-types"
-                  >atau tarik file ke area ini<br />JPG, PNG, WebP · hingga 12
-                  MB / 24 MP</span
+                  >or drag a file into this area<br />JPG, PNG, WebP · up to 12 MB / 24 MP</span
                 >
               </div>
             </div>
             <div id="comparison" class="comparison" hidden>
-              <img id="before-image" alt="Foto dokumen sebelum koreksi" />
+              <img id="before-image" alt="Document photo before processing" />
               <div id="after-layer">
-                <img id="after-image" alt="Hasil koreksi dokumen" />
+                <img id="after-image" alt="Processed document image" />
               </div>
               <div id="divider" aria-hidden="true">
                 <span>‹<b></b>›</span>
               </div>
               <div class="image-labels">
-                <span id="before-label">FOTO AWAL</span
-                ><span id="after-label">HASIL KOREKSI</span>
+                <span id="before-label">FIRST PHOTO</span
+                ><span id="after-label">PROCESSED RESULT</span>
               </div>
             </div>
             <div class="processing" id="processing" hidden role="status">
               <div class="scan-sweep" aria-hidden="true"></div>
-              <span class="processing-count">02 / PERIKSA</span
-              ><strong>Sedang membaca<br />kualitas fotonya.</strong>
-              <p>Memeriksa halaman, membaca teks, dan mengevaluasi bukti.</p>
+              <span class="processing-count">02 / CHECK</span
+              ><strong>Checking<br />your photo.</strong>
+              <p>Checking the page, reading text, and evaluating evidence.</p>
             </div>
           </div>
           <div class="viewer-bottom">
             <div id="compare-control" hidden>
               <button id="alignment-button" aria-pressed="false">
-                Sejajarkan halaman
+                Align the page
               </button>
               <div class="slider-control">
-                <label for="compare-range">Sebelum / sesudah</label
+                <label for="compare-range">Before / after</label
                 ><input
                   id="compare-range"
                   type="range"
@@ -225,176 +227,166 @@
               </div>
             </div>
             <p id="canvas-caption">
-              Foto diproses di perangkat ini melalui server lokal.
+              Photos are processed through the local server on this device.
             </p>
           </div>
         </div>
-        <aside class="inspector" aria-label="Hasil dan langkah berikutnya">
+        <aside class="inspector" aria-label="Results and next steps">
           <div class="report-heading">
-            <span class="section-label">HASIL PEMERIKSAAN</span
+            <span class="section-label">CHECK RESULTS</span
             ><span class="report-mark" aria-hidden="true">SP / 01</span>
           </div>
           <section class="next-step">
             <div class="status-line">
               <span id="status-icon" aria-hidden="true">○</span
-              ><span id="status-kicker">MENUNGGU DOKUMEN</span>
+              ><span id="status-kicker">WAITING FOR A DOCUMENT</span>
             </div>
             <h2 id="status-title" tabindex="-1">
-              Kita mulai<br />dari fotonya.
+              Let's start<br />with your photo.
             </h2>
             <p id="instruction" aria-live="polite">
-              Pilih foto di area dokumen. Hasil pemeriksaan dan arahan
-              berikutnya akan muncul di sini.
+              Choose a photo in the document area. Your results and next steps will appear here.
             </p>
             <div id="result-actions" hidden>
               <button id="replace-button" class="primary">
-                Pilih foto lain</button
-              ><a id="download" class="download" download="scanpilot-hasil.jpg"
-                >Unduh hasil JPG <span aria-hidden="true">↓</span></a
+                Choose another photo</button
+              ><a id="download" class="download" download="scanpilot-review.jpg"
+                >Download result JPG <span aria-hidden="true">↓</span></a
               >
             </div>
           </section>
+          <section id="diagnosis" class="quality-section" hidden aria-labelledby="diagnosis-title">
+            <h3 id="diagnosis-title">Automatic diagnosis</h3>
+            <p id="diagnosis-summary"></p>
+            <ul id="diagnosis-list"></ul>
+            <p class="technical-note">Several issues can occur in one photo. These are visual estimates; review the result.</p>
+          </section>
           <section class="quality-section">
-            <h3>Tiga hal yang diperiksa</h3>
+            <h3>Three quality checks</h3>
             <dl class="checks">
               <div>
-                <dt><span>01</span>Batas halaman</dt>
-                <dd id="page-check" data-state="idle">Keempat sudut dokumen</dd>
+                <dt><span>01</span>Page boundaries</dt>
+                <dd id="page-check" data-state="idle">All four document corners</dd>
               </div>
               <div>
-                <dt><span>02</span>Ketajaman</dt>
+                <dt><span>02</span>Sharpness</dt>
                 <dd id="focus-check" data-state="idle">
-                  Detail teks pada foto
+                  Text detail in the photo
                 </dd>
               </div>
               <div>
-                <dt><span>03</span>Pencahayaan</dt>
+                <dt><span>03</span>Lighting</dt>
                 <dd id="light-check" data-state="idle">
-                  Bayangan dan terang-gelap
+                  Shadows and uneven lighting
                 </dd>
               </div>
             </dl>
           </section>
           <details id="trace-box" hidden>
-            <summary>Detail proses <span aria-hidden="true">+</span></summary>
+            <summary>Process details <span aria-hidden="true">+</span></summary>
             <ol id="trace"></ol>
             <p class="technical-note">
-              Agen berbasis kebijakan: periksa, minta bukti, cocokkan, pilih
-              sumber, dan baca ulang. Tidak menggunakan model bahasa.
+              Policy-based agent: inspect, request evidence, match, select sources, and read again. No language model is used.
             </p>
           </details>
           <div class="trust-note">
             <span aria-hidden="true">i</span>
             <p>
-              Periksa <strong>sumber dan bacaan</strong> sebelum menggunakan
-              hasil. Teks dibaca dengan OCR lokal. Area tanpa bukti tetap
-              ditandai; angka tidak dikarang.
+              Check <strong>sources and readings</strong> before using the result. Text is read with local OCR. Areas without evidence stay marked; numbers are never invented.
             </p>
           </div>
         </aside>
-        <nav class="samples" aria-label="Contoh foto untuk mencoba ScanPilot">
+        <nav class="samples" aria-label="Sample photos to try ScanPilot">
           <div class="samples-heading">
-            <span class="section-label">COBA DULU</span>
-            <h2>Empat kondisi.<br />Satu alur.</h2>
-            <p>Belum punya foto?<br />Pilih bahan percobaan.</p>
+            <span class="section-label">TRY A SAMPLE</span>
+            <h2>Four conditions.<br />One workflow.</h2>
+            <p>No photo yet?<br />Pick a sample to explore.</p>
           </div>
           <div class="sample-options">
             <button data-sample="covered">
               <span class="sample-thumb"
                 ><img
-                  src="/api/sample/covered"
+                  src="/api/sample/covered?lang=en"
                   alt=""
                   width="60"
                   height="76"
                 /><span>04</span></span
               ><span class="sample-copy"
-                >Tertutup<small>Pulihkan dari foto kedua</small></span
+                >Covered<small>Recover from a second photo</small></span
               ><span class="sample-select" aria-hidden="true">&nearr;</span>
             </button>
             <button data-sample="perspective">
               <span class="sample-thumb"
                 ><img
-                  src="/api/sample/perspective"
+                  src="/api/sample/perspective?lang=en"
                   alt=""
                   width="60"
                   height="76"
                 /><span>01</span></span
               ><span class="sample-copy"
-                >Miring<small>Meluruskan halaman</small></span
+                >At an angle<small>Straighten the page</small></span
               ><span class="sample-select" aria-hidden="true">↗</span>
             </button>
             <button data-sample="shadow">
               <span class="sample-thumb"
                 ><img
-                  src="/api/sample/shadow"
+                  src="/api/sample/shadow?lang=en"
                   alt=""
                   width="60"
                   height="76"
                 /><span>02</span></span
               ><span class="sample-copy"
-                >Berbayang<small>Meratakan cahaya</small></span
+                >In shadow<small>Even out the lighting</small></span
               ><span class="sample-select" aria-hidden="true">↗</span>
             </button>
             <button data-sample="blur">
               <span class="sample-thumb"
                 ><img
-                  src="/api/sample/blur"
+                  src="/api/sample/blur?lang=en"
                   alt=""
                   width="60"
                   height="76"
                 /><span>03</span></span
               ><span class="sample-copy"
-                >Buram<small>Mengarahkan foto ulang</small></span
+                >Blurry<small>Get retake guidance</small></span
               ><span class="sample-select" aria-hidden="true">↗</span>
             </button>
           </div>
           <p class="sample-disclosure">
-            Bahan sintetis.<br />Diproses saat dipilih.
+            Synthetic samples.<br />Processed when selected.
           </p>
           <div class="photo-tip">
             <svg viewBox="0 0 32 32" aria-hidden="true">
               <path d="M7 10h5l2-3h6l2 3h5v16H7z" />
               <circle cx="17" cy="18" r="4" /></svg
-            ><strong>Sebelum memotret</strong>
+            ><strong>Before taking a photo</strong>
             <p>
-              Letakkan kertas di alas gelap, lalu ketuk teks di layar HP untuk
-              fokus.
+              Place the paper on a dark surface, then tap the text on your phone to focus.
             </p>
           </div>
         </nav>
       </section>
       <section id="about" class="about" hidden>
         <div>
-          <span class="section-label">PANDUAN SINGKAT</span>
-          <h2>Dari foto ke hasil<br />yang bisa diperiksa.</h2>
+          <span class="section-label">QUICK GUIDE</span>
+          <h2>From a photo to a result<br />you can inspect.</h2>
         </div>
         <div>
           <p>
-            Masukkan foto pertama. ScanPilot meluruskan halaman, membaca teks,
-            dan menandai bagian yang meragukan. Kamu juga bisa menandai bagian
-            yang terlewat di panel pemulihan.
+            Upload the first photo. ScanPilot straightens the page, reads its text, and marks uncertain regions. You can also mark any missed areas in the recovery panel.
           </p>
           <p>
-            Tambahkan foto kedua setelah memindahkan penghalang. Sertakan teks
-            di sekitar area dan nomor dokumen agar kedua foto dapat dicocokkan.
-            Klik baris OCR atau area halaman untuk melihat sumber gambar. Unduh
-            teks, PDF, atau laporan sumber setelah meninjau hasil.
+            Add a second photo after moving the obstruction. Include surrounding text and the document number so the photos can be matched. Click an OCR line or page region to see its source. Review the result, then download text, a PDF, or an evidence report.
           </p>
           <p class="technical-note">
-            Ambang kualitas masih awal; halaman berwarna, pantulan, tabel besar,
-            dan latar ramai dapat menyebabkan kesalahan. Penutup putih dan teks
-            yang sepenuhnya hilang mungkin tidak terdeteksi. Pencocokan tidak
-            membuktikan identitas dokumen. Skor OCR belum dikalibrasi. Maksimal
-            dua foto untuk satu halaman datar; model tidak menebak karakter yang
-            hilang.
+            Quality thresholds are preliminary; colored pages, glare, large tables, and busy backgrounds can cause errors. White covers and fully missing text may go undetected. Matching does not prove document identity. OCR scores are not calibrated. Use up to two photos of one flat page; missing characters are not guessed.
           </p>
         </div>
       </section>
     </main>
     <footer>
       <span
-        ><i></i>Prototipe lokal <span class="footer-separator">/</span> Foto
-        tidak dikirim ke layanan eksternal.</span
+        ><i></i>Local prototype <span class="footer-separator">/</span> Photos are not sent to external services.</span
       ><span id="engine">OPENCV 5</span>
     </footer>
     <input
