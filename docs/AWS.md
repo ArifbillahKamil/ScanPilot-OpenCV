@@ -1,6 +1,6 @@
 # Deployment AWS
 
-Konfigurasi tersedia, tetapi belum dideploy atau diuji di AWS. Akun/profil AWS belum dikonfigurasi dan Docker daemon belum berjalan pada sesi implementasi ini. Jangan mengklaim URL publik, biaya terukur, atau cloud benchmark sebelum deployment nyata berhasil.
+Konfigurasi tersedia, tetapi belum dideploy atau diuji di AWS. Akun/profil AWS belum dikonfigurasi. Docker Linux kini tersedia; status validasi kandidat terbaru dicatat di [RELEASE_READINESS.md](RELEASE_READINESS.md). Jangan mengklaim URL publik, biaya terukur, atau cloud benchmark sebelum deployment nyata berhasil.
 
 ## Arsitektur
 

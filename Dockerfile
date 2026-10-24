@@ -3,7 +3,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt requirements-lock.txt ./
-RUN pip install --no-cache-dir -r requirements.txt -c requirements-lock.txt
+RUN pip install --no-cache-dir --timeout 30 --retries 3 --progress-bar on -r requirements.txt -c requirements-lock.txt && pip check
 COPY app ./app
 COPY static ./static
 # Warm model initialization during the build verifies bundled model availability.

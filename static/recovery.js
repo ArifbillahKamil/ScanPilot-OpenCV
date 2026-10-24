@@ -264,7 +264,7 @@ function renderRecovery(data, readingOnly = false) {
     ? unresolved
       ? tr("Masih ada yang perlu dilihat.")
       : tr("Dua foto, satu hasil tinjauan.")
-    : tr("Satu sudut pandang lagi.");
+    : tr(data.status==='retake'?"Satu sudut pandang lagi.":"Periksa hasilnya.");
   $("second-instruction").textContent = unresolved
     ? tr(data.instruction)
     : hasRecovery ? tr("Bagian yang ditandai sudah memiliki bukti dari foto kedua. Bandingkan sumbernya, lalu simpan hasil untuk ditinjau.") : tr("Tinjau bacaan di bawah. Jika ada bagian yang terlewat, tandai pada halaman sebelum menambahkan foto kedua.");

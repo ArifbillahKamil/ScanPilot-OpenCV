@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const ctx={window:{},localStorage:{getItem:()=>null},document:{documentElement:{},addEventListener:()=>{}}};vm.createContext(ctx);
+for(const f of ['translations','i18n'])vm.runInContext(fs.readFileSync('static/'+f+'.js','utf8'),ctx);
+const source=fs.readFileSync('static/package.js','utf8');vm.runInContext(source.slice(source.indexOf('function packageTargets('),source.indexOf('function packageOpenTarget(')),ctx);
+vm.runInContext(source.slice(source.indexOf('function packageShouldUseResult('),source.indexOf('function packageState(')),ctx);
+assert.equal(ctx.packageShouldUseResult({status:'retake',issues:[{action:'Diperbaiki'}]}),true,'Keep successful enhancements even when review remains');
+assert.equal(ctx.packageShouldUseResult({status:'retake',issues:[]}),false,'Keep original when no improvement succeeded');
+assert.equal(ctx.packageShouldUseResult({status:'retake',recovered_count:1}),true,'Keep recovered regions');
+const page={data:{width:1000,height:2000,status:'retake',issues:[{kind:'blur',action:'Perlu foto ulang'}],regions:[{status:'recovered',box:[1,2,3,4],label:'Recovered'},{status:'unresolved',box:[10,20,30,40],label:'Bacaan OCR meragukan'}]},manual:[[.1,.2,.3,.4]]};
+let targets=ctx.packageTargets(page);assert.equal(targets.length,3);assert.equal(targets[0].box,null);assert.equal(targets[1].label,'Region 2: Uncertain OCR reading');assert.deepEqual(Array.from(targets[2].box),[100,400,300,800]);
+page.data.issues=[];page.data.regions=[];page.manual=[];assert.equal(ctx.packageTargets(page)[0].label,'Retake the whole page');
+page.data.status='ready';assert.equal(ctx.packageTargets(page).length,0);assert.equal(ctx.packageTargets({digital:true}).length,0);
+vm.runInContext("language='id'",ctx);page.data.status='retake';assert.equal(ctx.packageTargets(page)[0].label,'Foto ulang seluruh halaman');
+console.log('Package follow-up checks passed: whole-page guidance, unresolved regions, manual coordinates, recovered exclusions, bilingual labels.');

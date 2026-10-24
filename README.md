@@ -46,7 +46,7 @@ Lima pasangan sintetis dengan nominal baru dibandingkan melalui OCR langsung, pr
 
 Skor OCR bukan jaminan kebenaran. Penutup putih dapat terlewat dan membutuhkan penanda manual. Kecocokan visual tidak membuktikan identitas halaman fisik. Jika tidak ada bukti yang cukup, bagian tersebut tetap belum pulih. Planner berbasis kebijakan; tidak menggunakan model bahasa.
 
-Fitur lokal tersedia. Dockerfile, template ECS Express Mode, dan script deployment telah disiapkan. **Deployment AWS hidup, pengujian foto HP pengguna, build Docker Linux, biaya cloud, dan review tiga orang sesuai master prompt belum terverifikasi.** Keseluruhan checklist kompetisi belum dinyatakan selesai.
+Fitur lokal tersedia. Build Docker Linux/amd64 dan smoke test OCR, pemulihan, serta ekspor–impor PDF sudah lolos. Template ECS Express Mode dan script deployment tersedia. **Deployment AWS hidup, biaya/latensi cloud, benchmark akurasi independen, dan review pengguna sesuai master prompt belum terverifikasi.** Lihat [kesiapan deployment](docs/RELEASE_READINESS.md). Keseluruhan checklist kompetisi belum dinyatakan selesai.
 
 - [Detail implementasi dan batas](docs/IMPLEMENTATION.md)
 - [Hasil pengujian dan hal yang belum terverifikasi](docs/VALIDATION.md)

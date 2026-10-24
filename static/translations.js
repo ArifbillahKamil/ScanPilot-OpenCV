@@ -1,5 +1,20 @@
 // Indonesian source copy -> English. Placeholders preserve document data verbatim.
 window.SCANPILOT_COPY = {
+  "Kemungkinan tertutup benda gelap": "Possible dark obstruction",
+  "Meluruskan perspektif dari teks": "Correcting perspective from text",
+  "Arah baris teks digunakan untuk memperkirakan perspektif. Periksa batas halaman dan bentuk hasil.": "Text directions were used to estimate perspective. Review page boundaries and the resulting shape.",
+  "Sudut pandang lain dalam PDF ini: {0}": "Other views in this PDF: {0}",
+  "Dipulihkan menggunakan halaman {0}. Tinjau area yang disalin.": "Recovered using page {0}. Review the copied regions.",
+  "Mencari foto lain dari dokumen yang sama…": "Looking for other views of the same document…",
+  "Memeriksa halaman {0} sebagai bukti untuk halaman {1}…": "Checking page {0} as evidence for page {1}…",
+  "Halaman {0} tidak dapat digunakan: {1}": "Page {0} could not be used: {1}",
+  "Halaman {0} cocok, tetapi belum memberi bukti lebih jelas untuk area yang ditandai.": "Page {0} matches, but does not provide clearer evidence for the marked areas.",
+  "Pencocokan halaman gagal.": "Page matching failed.",
+  "Pilihanmu {0}": "Your selection {0}",
+  "Sertakan teks di sekitar area agar foto dapat dicocokkan.": "Include surrounding text so the photos can be matched.",
+  "Foto ulang seluruh halaman": "Retake the whole page",
+  "Tinjau atau foto ulang — halaman {0}": "Review or photograph again — page {0}",
+  "Buka area untuk memeriksa buktinya. Jika tidak terbaca, tambahkan foto lebih jelas dari halaman yang sama.": "Open an area to inspect the evidence. If it is unreadable, add a clearer photo of this same page.",
   "Ganti paket": "Replace package",
   "DOKUMEN LEBIH JELAS, HALAMAN DEMI HALAMAN": "A CLEARER DOCUMENT, PAGE BY PAGE",
   "Periksa seluruh PDF atau kumpulan foto. Temukan halaman yang perlu ditangani, pulihkan detail dengan foto tambahan, lalu ekspor satu dokumen untuk ditinjau.": "Check an entire PDF or photo set. Find the pages that need attention, recover missing detail with another photo, and export one reviewed document.",
@@ -393,3 +408,13 @@ window.SCANPILOT_COPY = {
   "Total unggahan maksimal 25 MB.": "Combined uploads must not exceed 25 MB.",
   "Ukuran request tidak valid.": "Invalid request size."
 };
+Object.assign(window.SCANPILOT_COPY, {
+  'Periksa hasilnya.': 'Review the result.',
+  'Periksa bacaan dan batas halaman yang ditandai. Tambahkan foto lebih jelas hanya jika teks tidak dapat dibaca.': 'Review the marked readings and page boundaries. Add a clearer photo only if the text cannot be read.',
+  'Unduh dokumenmu': 'Download your document',
+  'Unduh PDF akhir': 'Download final PDF',
+  'Semua halaman tetap sesuai urutan asli. Area yang perlu ditinjau tetap ditandai.': 'All pages stay in their original order. Areas needing review remain marked.',
+  'Lihat masalah dan area': 'View issues and areas',
+  'Unduhan halaman': 'Page downloads',
+  'Langsung ke unggah dokumen': 'Skip to document upload'
+});

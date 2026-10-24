@@ -4,7 +4,7 @@ import time
 
 import cv2
 import numpy as np
-from app.page_geometry import partial_page_quad
+from app.page_geometry import partial_page_quad, neutral_page_quad
 
 
 def encode(image):
@@ -44,7 +44,7 @@ def page_quad(image):
             if min(np.linalg.norm(points - np.roll(points, 1, axis=0), axis=1)) < 80:
                 continue
             return points
-    return None
+    return neutral_page_quad(image)
 
 
 def rectify(image, points):
@@ -121,6 +121,35 @@ def rotate_expanded(image, angle):
     return cv2.warpAffine(image,matrix,(width,height),borderValue=(68,68,68))
 
 
+def text_perspective(image):
+    """Estimate horizontal convergence from distributed, confident text rows."""
+    from app.reading import read
+    h,w=image.shape[:2];rows=[]
+    for line in read(image):
+        p=np.asarray(line['polygon']);edge=p[1]-p[0]
+        if line['score']<.85 or edge[0]<max(80,np.linalg.norm(p[3]-p[0])*3):continue
+        slope=edge[1]/edge[0]
+        if abs(slope)>.6:continue
+        rows.append((p[0,1]-slope*p[0,0],slope))
+    if len(rows)<6:return None
+    rows=np.asarray(rows);best=None
+    for i in range(len(rows)):
+        for j in range(i):
+            if abs(rows[i,0]-rows[j,0])<h*.25:continue
+            a=(rows[i,1]-rows[j,1])/(rows[i,0]-rows[j,0]);b=rows[i,1]-a*rows[i,0]
+            keep=np.abs(rows[:,1]-(a*rows[:,0]+b))<.035
+            if best is None or keep.sum()>best.sum():best=keep
+    if best is None or best.sum()<max(6,.7*len(rows)) or np.ptp(rows[best,0])<h*.25:return None
+    a,b=np.polyfit(rows[best,0],rows[best,1],1)
+    if not .06<abs(a)*w<1.4 or not .45<1+a*w<2.5:return None
+    H=np.array([[1.,0,0],[-b,1,0],[a,0,1]])
+    corners=cv2.perspectiveTransform(np.float32([[[0,0],[w,0],[w,h],[0,h]]]),H)[0]
+    low=np.floor(corners.min(axis=0));high=np.ceil(corners.max(axis=0));size=(high-low).astype(int)
+    if max(size)>3200:return None
+    H=np.array([[1,0,-low[0]],[0,1,-low[1]],[0,0,1]])@H
+    return cv2.warpPerspective(image,H,tuple(size),borderValue=(210,210,210))
+
+
 def analyze(image, page_frame=False):
     started = time.perf_counter()
     h, w = image.shape[:2]
@@ -129,14 +158,17 @@ def analyze(image, page_frame=False):
     if max(h, w) > 1600:
         image = cv2.resize(image, None, fx=1600/max(h,w), fy=1600/max(h,w), interpolation=cv2.INTER_AREA)
     ih,iw=image.shape[:2]
-    points = np.float32([[0,0],[iw-1,0],[iw-1,ih-1],[0,ih-1]]) if page_frame else page_quad(image)
+    # A PDF frame can contain a camera photograph. Look for paper edges first.
+    points = page_quad(image)
     estimated = False
     if points is None:
         points = partial_page_quad(image)
         estimated = points is not None
     geometry = geometry_metrics(points)
-    page = rectify(image, points) if points is not None and not page_frame else image.copy()
-    text_angle = text_tilt(image) if points is None or page_frame else None
+    page = rectify(image, points) if points is not None else image.copy()
+    text_warp = text_perspective(image) if points is None else None
+    if text_warp is not None:page=text_warp
+    text_angle = text_tilt(page) if points is None and text_warp is None else None
     if text_angle is not None and abs(text_angle) > 1.5:
         page = rotate_expanded(image, text_angle)
     before = metrics(page)
@@ -144,16 +176,16 @@ def analyze(image, page_frame=False):
     result = page.copy()
     reasons = []
     issues = []
-    if page_frame and text_angle is not None and abs(text_angle)>1.5:
-        issues.append({'kind':'tilt','label':'Halaman miring','action':'Diperbaiki'})
-        trace.append({'title':'Meluruskan arah teks','detail':'Rotasi mengikuti arah baris teks. Batas halaman dan perspektif belum dipastikan.'})
+    if text_warp is not None:
+        issues.append({'kind':'perspective','label':'Distorsi perspektif','action':'Diperbaiki'})
+        trace.append({'title':'Meluruskan perspektif dari teks','detail':'Arah baris teks digunakan untuk memperkirakan perspektif. Periksa batas halaman dan bentuk hasil.'})
     if estimated:
         issues.append({'kind':'partial-page', 'label':'Sudut halaman diperkirakan dari tepi', 'action':'Perlu ditinjau'})
         reasons.append('Perspektif diluruskan dari tepi kertas. Area abu-abu berada di luar foto; periksa batas hasil.')
         trace[0]['detail'] = 'Empat tepi terlihat; sebagian sudut berada di luar foto.'
     if points is None:
-        issues.append({'kind':'page-boundary', 'label':'Batas halaman belum jelas', 'action':'Perlu foto ulang'})
-        reasons.append('Letakkan kertas di permukaan gelap dan pastikan empat sudut masuk foto.')
+        # Full-bleed scans need no crop; the container alone proves no geometry.
+        issues.append({'kind':'page-boundary', 'label':'Batas halaman belum jelas', 'action':'Perlu ditinjau'})
         if text_angle is not None and abs(text_angle) > 1.5:
             issues.append({'kind':'tilt', 'label':'Halaman miring', 'action':'Diperbaiki'})
             trace.append({'title':'Meluruskan arah teks', 'detail':'Rotasi mengikuti arah baris teks. Batas halaman dan perspektif belum dipastikan.'})
@@ -194,6 +226,7 @@ def analyze(image, page_frame=False):
         'instruction': ' '.join(reasons) if reasons else 'Bandingkan foto dan hasilnya. Periksa angka penting sebelum digunakan.',
         'page_detected': points is not None and not estimated,
         'page_estimated': estimated,
+        'geometry_source': 'estimated-edges' if estimated else 'detected-edges' if points is not None else 'text-perspective' if text_warp is not None else 'text-only' if text_angle else 'unverified-frame',
         'issues': issues, 'geometry': geometry, 'text_rotation_degrees': text_angle,
         'before': before, 'after': after, 'trace': trace,
         'original': data_url(image), 'aligned': data_url(page), 'result': data_url(result),

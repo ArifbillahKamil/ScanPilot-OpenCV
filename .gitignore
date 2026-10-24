@@ -3,3 +3,36 @@ __pycache__/
 *.pyc
 .env
 artifacts/
+
+# Local datasets, uploaded documents, generated reports and browser profiles
+/output/
+/tmp/
+/uploads/
+/docs/references/
+/hackathon-master-prompt*.md
+
+# Credentials and machine-specific configuration
+.env.*
+!.env.example
+!.env.sample
+.aws/
+*.pem
+*.key
+credentials.json
+*.tfstate*
+
+# Caches, local editors and build output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.vscode/
+.idea/
+node_modules/
+build/
+dist/
+*.egg-info/
+*.log
+Thumbs.db
+.DS_Store

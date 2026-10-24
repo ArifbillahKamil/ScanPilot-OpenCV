@@ -100,6 +100,23 @@ def recover_document(first: UploadFile, second: UploadFile, regions: str = Form(
         second.file.close()
 
 
+@app.post('/api/package/matches')
+def package_matches(images: list[UploadFile]):
+    from app.page_matches import find_matches
+    try:
+        if not 2<=len(images)<=20:raise HTTPException(400,'Provide 2 to 20 page images.')
+        def action():
+            loaded=[]
+            for file in images:
+                image=load_image(file);h,w=image.shape[:2]
+                if max(h,w)>1000:image=cv2.resize(image,None,fx=1000/max(h,w),fy=1000/max(h,w))
+                loaded.append(image)
+            return find_matches(loaded)
+        return run_processing(action)
+    finally:
+        for file in images:file.file.close()
+
+
 @app.post('/api/export/pdf')
 def export_pdf(file: UploadFile):
     image = load_image(file)

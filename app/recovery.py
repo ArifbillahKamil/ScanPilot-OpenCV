@@ -26,6 +26,24 @@ def obstruction(image):
     return cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((9, 9), np.uint8))
 
 
+def dark_obstruction(image):
+    """Long solid dark objects crossing text, rather than individual ink strokes."""
+    gray=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY);h,w=gray.shape
+    mask=np.uint8(gray<65)*255
+    vertical=cv2.morphologyEx(mask,cv2.MORPH_OPEN,np.ones((max(25,int(h*.25)),9),np.uint8))
+    horizontal=cv2.morphologyEx(mask,cv2.MORPH_OPEN,np.ones((9,max(25,int(w*.25))),np.uint8))
+    mask=cv2.bitwise_or(vertical,horizontal)
+    out=np.zeros_like(mask)
+    contours=[]
+    for component in [vertical,horizontal]:
+        contours.extend(cv2.findContours(component,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[0])
+    for c in contours:
+        x,y,bw,bh=cv2.boundingRect(c)
+        if (bh>h*.3 and bw<w*.28 and bh>bw*3) or (bw>w*.3 and bh<h*.2 and bw>bh*4):
+            cv2.drawContours(out,[c],-1,255,-1)
+    return out
+
+
 def intersects(a, b):
     x, y, w, h = a
     X, Y, W, H = b
@@ -35,7 +53,15 @@ def intersects(a, b):
 def regions_for(page, lines, sharpness, detect_cover=True):
     h, w = page.shape[:2]
     boxes = []
+    dark=dark_obstruction(page)
+    dark_contours,_=cv2.findContours(dark,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+    for c in dark_contours:
+        x,y,bw,bh=cv2.boundingRect(c)
+        boxes.append(([max(0,x-4),max(0,y-4),min(w,x+bw+4)-max(0,x-4),min(h,y+bh+4)-max(0,y-4)],'dark-cover'))
     mask = obstruction(page)
+    # Large amounts of coloured print are common in posters and brochures.
+    # Colour alone is insufficient evidence to demand a new photograph.
+    if np.mean(mask>0)>.09 or np.any(dark):mask[:]=0
     if not detect_cover:
         # Without page corners, inspect only objects entering the observed text area.
         text_area=np.zeros_like(mask)
@@ -62,10 +88,27 @@ def regions_for(page, lines, sharpness, detect_cover=True):
                 x, y, bw, bh = line['box']
                 boxes.append(([max(0,x-2),max(0,y-2),min(w,x+bw+2)-max(0,x-2),
                                min(h,y+bh+2)-max(0,y-2)], 'low-ocr-score'))
-    labels = {'possible-cover': 'Kemungkinan tertutup / objek berwarna',
+    labels = {'dark-cover':'Kemungkinan tertutup benda gelap','possible-cover': 'Kemungkinan tertutup / objek berwarna',
               'blur': 'Detail teks terlalu lemah', 'low-ocr-score': 'Bacaan OCR meragukan'}
     return [{'id': f'region-{i+1}', 'box': b, 'reason': why, 'label': labels[why],
              'status': 'unresolved', 'source': 'photo-1'} for i, (b, why) in enumerate(boxes[:30])]
+
+
+def match_patch_lighting(base, source, box):
+    """Match exposure from surrounding bright pixels, never blend old ink into new text."""
+    x,y,w,h=box
+    margin=max(8,min(32,h//2))
+    x0,y0=max(0,x-margin),max(0,y-margin)
+    x1,y1=min(base.shape[1],x+w+margin),min(base.shape[0],y+h+margin)
+    a=base[y0:y1,x0:x1];b=source[y0:y1,x0:x1]
+    ring=np.ones(a.shape[:2],bool);ring[y-y0:y-y0+h,x-x0:x-x0+w]=False
+    ring &= (a.min(axis=2)>100)&(b.min(axis=2)>100)
+    crop=source[y:y+h,x:x+w]
+    if ring.sum()<40:return crop
+    ratios=np.median(a[ring].astype(float)/np.maximum(b[ring],1),axis=0)
+    # Bound correction and preserve hue by applying one exposure multiplier.
+    gain=float(np.clip(np.median(ratios),.75,1.35))
+    return np.uint8(np.clip(crop.astype(float)*gain,0,255))
 
 
 def pack(result, page, lines, regions, started):
@@ -74,11 +117,15 @@ def pack(result, page, lines, regions, started):
                   elapsed_ms=round((time.perf_counter()-started)*1000),
                   planner='bounded-policy', sources=[{'id':'photo-1','label':'Foto awal'}])
     unresolved = [r for r in regions if r['status'] == 'unresolved']
-    if unresolved:
+    needs_photo=any(r['reason'] in {'possible-cover','dark-cover','blur','manual'} for r in unresolved)
+    if unresolved and not needs_photo:
+        result['status']='review' if not any(i['kind']=='blur' and i['action']=='Perlu foto ulang' for i in result.get('issues',[])) else 'retake'
+        result['instruction']='Periksa bacaan dan batas halaman yang ditandai. Tambahkan foto lebih jelas hanya jika teks tidak dapat dibaca.'
+    if needs_photo:
         result['status'] = 'retake'
         result['instruction'] = ('Ada bagian yang belum dapat diverifikasi. Singkirkan penghalang, ketuk teks untuk fokus, '
                                  'lalu tambahkan foto kedua dari halaman yang sama. Sertakan teks di sekitar area agar dapat dicocokkan.')
-        if not any(r['reason'] == 'possible-cover' for r in unresolved):
+        if not any(r['reason'] in {'possible-cover','dark-cover'} for r in unresolved):
             result['instruction'] = ('Detail teks belum cukup jelas. Ketuk teks untuk fokus dan gunakan cahaya merata. '
                                      'Tambahkan foto kedua yang lebih tajam dengan teks di sekitar area tetap terlihat.')
     if not lines:
@@ -103,6 +150,8 @@ def inspect(image, page_frame=False):
     regions = regions_for(page, lines, result['before']['sharpness'], detect_cover=result['page_detected'])
     if any(r['reason'] == 'possible-cover' for r in regions):
         result['issues'].append({'kind':'possible-cover', 'label':'Kemungkinan tertutup / objek berwarna', 'action':'Perlu ditinjau'})
+    if any(r['reason'] == 'dark-cover' for r in regions):
+        result['issues'].append({'kind':'dark-cover','label':'Kemungkinan tertutup benda gelap','action':'Perlu ditinjau'})
     if any(r['reason'] == 'low-ocr-score' for r in regions):
         result['issues'].append({'kind':'low-ocr-score', 'label':'Bacaan OCR meragukan', 'action':'Perlu ditinjau'})
     result['trace'].append({'title':'Membaca teks dengan OCR lokal',
@@ -113,10 +162,13 @@ def inspect(image, page_frame=False):
     return pack(result, page, lines, regions, started)
 
 
-def register(first, second):
+def register(first, second, features=None):
     sift = cv2.SIFT_create(nfeatures=4500)
-    k1, d1 = sift.detectAndCompute(cv2.cvtColor(first, cv2.COLOR_BGR2GRAY), None)
-    k2, d2 = sift.detectAndCompute(cv2.cvtColor(second, cv2.COLOR_BGR2GRAY), None)
+    if features is None:
+        k1, d1 = sift.detectAndCompute(cv2.cvtColor(first, cv2.COLOR_BGR2GRAY), None)
+        k2, d2 = sift.detectAndCompute(cv2.cvtColor(second, cv2.COLOR_BGR2GRAY), None)
+    else:
+        (k1,d1),(k2,d2)=features
     if d1 is None or d2 is None:
         raise ValueError('Detail bersama tidak cukup. Ambil foto lebih lebar dan tajam, atau ganti foto awal.')
     pairs = cv2.BFMatcher().knnMatch(d2, d1, k=2)
@@ -164,7 +216,9 @@ def check_identity(old_lines, new_lines):
                 continue
             a = re.sub(r'\W','',old['text']).lower()
             b = re.sub(r'\W','',new['text']).lower()
-            if a != b and any(c.isdigit() for c in a+b):
+            # A newly uncovered prefix is not a conflicting number. Compare the
+            # actual digit sequences, rather than rejecting any text containing a digit.
+            if a != b and re.findall(r'\d+',a)!=re.findall(r'\d+',b) and re.search(r'\d',a) and re.search(r'\d',b):
                 conflicts.append({'first':old['text'],'second':new['text']})
     return conflicts
 
@@ -239,6 +293,25 @@ def recover(first_image, second_image, selected=None, first_page_frame=False):
     if conflicts:
         raise ValueError('Isi kedua foto bertentangan: '+ '; '.join(f"{c['first']} / {c['second']}" for c in conflicts[:3])+
                          '. Hasil tidak digabung. Pastikan halaman dan versi dokumennya sama; periksa juga bacaan OCR.')
+    # Split a long obstruction into text-sized targets. Other photographs may
+    # uncover only some rows; requiring the whole pole to disappear loses them.
+    split=[];unseen_dark=np.zeros(first.shape[:2],np.uint8)
+    dark=dark_obstruction(first)
+    for region in regions:
+        if region['reason']!='dark-cover':split.append(region);continue
+        supported=[]
+        for line in candidate_lines:
+            x,y,rw,rh=line['box']
+            if line['score']<.88 or not intersects(line['box'],region['box']):continue
+            oldmask=dark[y:y+rh,x:x+rw]
+            if oldmask.size and np.mean(oldmask>0)>.06:
+                supported.append({**region,'box':[x,y,rw,rh]})
+        split.extend(supported or [region])
+        if supported:
+            x,y,rw,rh=region['box'];unseen_dark[y:y+rh,x:x+rw]=dark[y:y+rh,x:x+rw]
+            for target in supported:
+                x,y,rw,rh=target['box'];unseen_dark[y:y+rh,x:x+rw]=0
+    regions=split
     regions=expand_to_readable_lines(regions,candidate_lines,first.shape)
     output = base.copy()
     source_mask = np.zeros(first.shape[:2], np.uint8)
@@ -253,7 +326,9 @@ def recover(first_image, second_image, selected=None, first_page_frame=False):
         colored = float(np.mean(obstruction(crop)>0)) if crop.size else 1
         if not cover.size or np.mean(cover>0) < .995:
             reason = 'Foto kedua belum mencakup seluruh area ini.'
-        elif colored > .025:
+        elif region['reason']=='dark-cover' and (np.mean(cv2.cvtColor(crop,cv2.COLOR_BGR2GRAY)<65) >= np.mean(cv2.cvtColor(old,cv2.COLOR_BGR2GRAY)<65)-.06):
+            reason = 'Penghalang belum terlihat berkurang.'
+        elif colored > .025 and region['reason'] not in {'dark-cover','low-ocr-score'}:
             reason = 'Masih ada objek berwarna pada area ini; perlu tinjauan atau foto lain.'
         elif not supported_lines:
             reason = 'Belum ada teks yang cukup terbaca di area ini.'
@@ -264,7 +339,7 @@ def recover(first_image, second_image, selected=None, first_page_frame=False):
         if reason:
             region['note'] = reason
             continue
-        output[y:y+rh,x:x+rw] = crop
+        output[y:y+rh,x:x+rw] = match_patch_lighting(base,warped,(x,y,rw,rh))
         source_mask[y:y+rh,x:x+rw] = 255
         region.update(status='recovered',source='photo-2',note='Piksel dari foto kedua; bacaan tetap perlu ditinjau.')
     final_lines = read(output, source_mask)
@@ -276,8 +351,16 @@ def recover(first_image, second_image, selected=None, first_page_frame=False):
             source_mask[y:y+rh,x:x+rw] = 0
             region.update(status='unresolved',source='photo-1',note='Pembacaan hasil gabungan gagal; salinan dibatalkan.')
     final_lines = read(output,source_mask)
+    # Missing evidence outside newly readable rows must not silently disappear.
+    for c in cv2.findContours(unseen_dark,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[0]:
+        if cv2.contourArea(c)<first.shape[0]*first.shape[1]*.001:continue
+        regions.append({'box':list(cv2.boundingRect(c)),'reason':'dark-cover','label':'Kemungkinan tertutup benda gelap','status':'unresolved','source':'photo-1','note':'Belum ada teks yang cukup terbaca di area ini.'})
+    for i,region in enumerate(regions):region['id']=f'region-{i+1}'
     count = sum(r['status']=='recovered' for r in regions)
     result.update(result=data_url(output),after=metrics(output),status='review')
+    for issue in result['issues']:
+        matching=[r for r in regions if r['reason']==issue['kind']]
+        if matching and all(r['status']=='recovered' for r in matching):issue['action']='Diperbaiki'
     result['trace'].extend([
         {'title':'Mencocokkan bukti baru','detail':f"{match['inliers']} titik cocok; galat median {match['median_error_px']} piksel."},
         {'title':'Memilih sumber per area','detail':f'{count} dari {len(regions)} area disalin dari foto kedua. Area tanpa bukti tetap ditandai.'},

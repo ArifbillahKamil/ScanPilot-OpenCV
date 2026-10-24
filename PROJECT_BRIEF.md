@@ -1,5 +1,7 @@
 > Pembaruan 8 September 2026: scope diperluas sesuai diskusi pengguna ke pemulihan dari dua foto. OCR lokal, penanda area, pencocokan dan penggabungan sumber, tinjauan bukti, serta ekspor sudah diimplementasikan. Arah UI terbaru mengikuti referensi Stripe yang disetujui pengguna. Rencana dan status mutakhir ada di README.md dan docs/IMPLEMENTATION.md. Bagian di bawah adalah catatan Stage 1/prototipe awal, bukan status fitur saat ini. AWS hidup dan validasi foto nyata masih belum terverifikasi.
 
+> Status 23 Oktober 2026: aplikasi kini mendukung PDF hingga 20 halaman, diagnosis per halaman, koreksi perspektif/pencahayaan, pencocokan foto antarhalaman, pemulihan berbasis bukti, dan ekspor PDF gabungan. UI berfokus pada unggah, tinjau, dan unduh; detail diagnosis/OCR dibuka sesuai kebutuhan. Koreksi yang berhasil tetap disertakan dalam ekspor walaupun halaman masih membutuhkan tinjauan. Catatan Stage 1 di bawah merupakan riwayat scope, bukan daftar fitur terbaru. Deployment AWS dan benchmark independen tetap belum selesai.
+
 # ScanPilot — Stage 1
 
 Status: Stage 2 — prototipe lokal pertama tersedia. Pengguna menyetujui Paper + CleanShot + Screen Studio untuk dicoba dan direvisi. Validasi foto nyata, OCR, agent, dan AWS masih belum selesai.
